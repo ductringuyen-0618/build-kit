@@ -45,9 +45,9 @@ it. The CLI also writes `skills-lock.json` (source, path, content hash) so
 `npx skills update` can refresh later. On Windows, symlinks need Developer
 Mode or an elevated shell; pass `--copy` if the symlink step is skipped.
 
-Skills carry `references/` and `scripts/` with them, so a skill that runs
-a script (`test-app-e2e`, `verify-techpulse`, `graphify-new-project`)
-works from the installed copy.
+Skills carry `references/`, `briefings/` and `scripts/` with them, so a
+skill that points at a bundled file (for example `missions` and its
+`briefings/`) works from the installed copy.
 
 Once installed, a skill triggers by its `description` when the request
 matches, and Claude Code, Cursor and Codex can also invoke it by name
@@ -69,8 +69,11 @@ it and tell the assistant to read the kit's `AGENTS.md` first. The three
 tool-specific files in this repo are one-paragraph pointers at
 `AGENTS.md`; copy them too if you want them.
 
-Agent personas in `agents/<name>/AGENT.md` are Claude Code subagents.
-Copy one to `.claude/agents/<name>.md` in the session repo.
+Role briefs in `agents/<role>.md` are plain Markdown. In Claude Code,
+copy one to `.claude/agents/<role>.md` in the session repo and add a
+`name` and `description` frontmatter to make it a subagent type; in any
+other tool paste it as the first message of a new chat (see
+`agents/README.md`).
 
 ## Manual fallback
 

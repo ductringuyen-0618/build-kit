@@ -63,7 +63,7 @@ output into the role's report format instead of skipping the step.
 ## Roles that live upstream
 
 Earlier versions of this folder carried three runtime agents (`coo`,
-`librarian`, `ops`) from the agent-os daemon. They need a scheduler, a
-wiki, and a set of syscalls that only exist in that runtime, so they do
-not belong in a timed build. They now live at
-<https://github.com/ductringuyen-0618/agent-os>.
+`librarian`, `ops`) from the author's always-on agent runtime. They need
+a scheduler, a wiki, and a set of syscalls that only exist in that
+runtime, so they do not belong in a timed build. They live in the agent
+runtime repo linked from the README's Provenance section.
