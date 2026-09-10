@@ -1,83 +1,88 @@
-# GitHub Actions CI for a backend/ + optional frontend/ repo.
-# Copy to .github/workflows/ci.yml. The backend job below is the Python
-# FastAPI one; replace its steps with templates/<stack>/ci-job.yml for
-# java-spring-boot, node-typescript or go. The frontend job is Vite/React;
-# swap in templates/nextjs/ci-job.yml for Next.js. Both jobs skip cleanly if
-# their folder does not exist, so this works for a backend-only service.
-# pnpm monorepo: use templates/ci-monorepo.yml instead.
+# GitHub Actions CI: one job per component, plus a secret scan.
+# Copy to .github/workflows/ci.yml. Edit every line marked "# CHANGE:";
+# everything else works as written. Delete a job whose component the repo
+# does not have (a backend-only service keeps `backend` and `secrets`).
+# The step lists below are for a Python backend and a Node frontend; the
+# per-stack table in skills/ci-cd-github-actions/SKILL.md gives the
+# equivalent commands for Java, Go, Next.js and others, and
+# templates/<stack>/ci-job.yml holds a paste-ready job where one exists.
+# pnpm workspaces: use templates/ci-monorepo.yml instead of this file.
 
-name: CI
+name: CI   # deploy-do.yml refers to this workflow by this name
 
 on:
   push:
-    branches: [main, 'feature/**', 'bugfix/**', 'hotfix/**', 'refactor/**', 'docs/**']
+    branches: [main]          # CHANGE: default branch if not main; add 'feature/**' etc. to check pushes that have no PR
   pull_request:
-    branches: [main]
+    branches: [main]          # CHANGE: default branch if not main
   workflow_dispatch:
 
+# A second push to the same branch cancels the run still in progress.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# Read-only by default; widen per job only when a job writes (packages, pages).
 permissions:
   contents: read
 
 jobs:
   backend:
-    name: Backend
+    name: Backend             # CHANGE: this string is the status-check name branch protection requires
     runs-on: ubuntu-latest
     timeout-minutes: 15
     defaults:
       run:
-        working-directory: backend
+        working-directory: backend   # CHANGE: component folder; use '.' when the repo is one component
     env:
-      ENVIRONMENT: testing
-      DATABASE_URL: sqlite:///./data/ci.db
+      # CHANGE: every variable the app's config reads at import or startup,
+      # with throwaway values. Mirror the list in .env.example.
+      ENVIRONMENT: test
+      DATABASE_URL: sqlite:///./ci.db
     steps:
       - uses: actions/checkout@v7
-      - id: present
-        run: test -f requirements.txt && echo "yes=true" >> "$GITHUB_OUTPUT" || echo "yes=false" >> "$GITHUB_OUTPUT"
-      - if: steps.present.outputs.yes == 'true'
-        uses: actions/setup-python@v7
+      - uses: actions/setup-python@v7                    # CHANGE: setup-node / setup-java / setup-go for other stacks
         with:
-          python-version: '3.12'
-          cache: pip
-          cache-dependency-path: backend/requirements.txt
-      - if: steps.present.outputs.yes == 'true'
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install ruff mypy pytest
-      - if: steps.present.outputs.yes == 'true'
-        run: ruff check . && ruff format --check .
-      - if: steps.present.outputs.yes == 'true'
-        run: mypy . --ignore-missing-imports
-      - if: steps.present.outputs.yes == 'true'
-        run: mkdir -p data && pytest tests -q
-      - if: steps.present.outputs.yes == 'true'
-        run: python -c "from src.main import app"
+          python-version: '3.12'                         # CHANGE
+          cache: pip                                     # CHANGE: npm | pnpm | gradle | maven (Go caches by default)
+          cache-dependency-path: backend/requirements.txt   # CHANGE: lockfile path from the repo root
+      - name: Install
+        run: pip install -r requirements.txt ruff mypy pytest   # CHANGE: install command; include lint and test tools
+      - name: Lint
+        run: ruff check . && ruff format --check .       # CHANGE
+      - name: Typecheck
+        run: mypy . --ignore-missing-imports             # CHANGE: delete for compiled languages (the build step covers it)
+      - name: Test
+        run: pytest -q                                   # CHANGE
+      - name: Build
+        run: python -c "import src.main"                 # CHANGE: build command; for Python, import the app module as a smoke check
 
   frontend:
-    name: Frontend
+    name: Frontend            # CHANGE: status-check name, as above
     runs-on: ubuntu-latest
     timeout-minutes: 15
     defaults:
       run:
-        working-directory: frontend
+        working-directory: frontend   # CHANGE: component folder
     steps:
       - uses: actions/checkout@v7
-      - id: present
-        run: test -f package.json && echo "yes=true" >> "$GITHUB_OUTPUT" || echo "yes=false" >> "$GITHUB_OUTPUT"
-      - if: steps.present.outputs.yes == 'true'
-        uses: actions/setup-node@v7
+      - uses: actions/setup-node@v7
         with:
-          node-version: '22'
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
-      - if: steps.present.outputs.yes == 'true'
-        run: npm ci
-      - if: steps.present.outputs.yes == 'true'
-        run: npm run verify
+          node-version: '22'                             # CHANGE
+          cache: npm                                     # CHANGE: pnpm or yarn if used (pnpm needs pnpm/action-setup first)
+          cache-dependency-path: frontend/package-lock.json   # CHANGE: lockfile path from the repo root
+      - name: Install
+        run: npm ci                                      # CHANGE: pnpm install --frozen-lockfile | yarn --immutable
+      - name: Lint
+        run: npm run lint                                # CHANGE: script name in package.json
+      - name: Typecheck
+        run: npx tsc --noEmit                            # CHANGE: or the project's typecheck script
+      - name: Test
+        run: npm test                                    # CHANGE: delete this step if the frontend has no test script
+      - name: Build
+        run: npm run build                               # CHANGE
+      - name: Build output exists
+        run: test -d dist                                # CHANGE: dist | build | .next, whatever the build writes
 
   secrets:
     name: Secret scan
@@ -86,7 +91,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          fetch-depth: 0
+          fetch-depth: 0      # full history, so a token committed and then removed is still found
       - uses: gitleaks/gitleaks-action@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}   # CHANGE: uncomment for organisation-owned repos (free key)
