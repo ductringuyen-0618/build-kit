@@ -1,0 +1,20 @@
+# CI job snippet for a Vite/React frontend in frontend/.
+# Paste under `jobs:` in .github/workflows/ci.yml. `npm run verify` chains
+# typecheck, lint, format:check and build (see README.md in this folder).
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run verify
+      - run: test -d dist

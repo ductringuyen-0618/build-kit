@@ -1,0 +1,35 @@
+# App Platform service component for a Spring Boot backend in backend/.
+# Paste under `services:` in .do/app.yaml. Dockerfile is required (no Java buildpack).
+  - name: api
+    github:
+      repo: OWNER/REPO
+      branch: main
+      deploy_on_push: true
+    source_dir: backend
+    dockerfile_path: backend/Dockerfile
+    http_port: 8080
+    instance_count: 1
+    instance_size_slug: apps-s-1vcpu-1gb
+    health_check:
+      http_path: /actuator/health
+      initial_delay_seconds: 40
+    envs:
+      - key: SPRING_PROFILES_ACTIVE
+        scope: RUN_TIME
+        value: prod
+      - key: SPRING_DATASOURCE_URL
+        scope: RUN_TIME
+        value: ${db.JDBC_DATABASE_URL}
+      - key: SPRING_DATASOURCE_USERNAME
+        scope: RUN_TIME
+        value: ${db.USERNAME}
+      - key: SPRING_DATASOURCE_PASSWORD
+        scope: RUN_TIME
+        value: ${db.PASSWORD}
+      - key: APP_ALLOWED_ORIGINS
+        scope: RUN_TIME
+        value: ${APP_URL}
+      - key: APP_ADMIN_TOKEN
+        scope: RUN_TIME
+        type: SECRET
+        value: ""

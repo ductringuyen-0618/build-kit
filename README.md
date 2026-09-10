@@ -1,14 +1,14 @@
 # build-kit
 
-Claude Code skills, agent definitions and a time-boxed playbook that Tri
-Nguyen uses to ship small production services fast. The skills were
-written for and used on real projects (an AI news aggregator, an
+Skills, agent definitions, per-stack templates and a time-boxed playbook
+that Tri Nguyen uses to ship small production services fast. The skills
+were written for and used on real projects (an AI news aggregator, an
 always-on agent daemon, a booking platform, a portfolio site). This repo
 packs them into one place so that, at the start of a timed build session
-such as DigitalOcean's three-hour build interview, an AI coding assistant
-can be pointed at it and work the way Tri works: plan by asking, build
-with tests, verify before claiming done, deploy to a public URL, leave a
-README and demo notes behind.
+such as DigitalOcean's three-hour build interview, any AI coding assistant
+can be pointed at it and work the way Tri works: pick a stack, plan by
+asking, build with tests, verify before claiming done, deploy to a public
+URL, leave a README and demo notes behind.
 
 ## The one line to give the assistant
 
@@ -16,43 +16,60 @@ README and demo notes behind.
 Read AGENTS.md in this repo first, then follow playbook/3-hour-build.md for the task I'm about to describe.
 ```
 
-If the session repo is separate from this one, clone this kit next to it
-or into `.claude/` and point the assistant at `AGENTS.md`.
+`AGENTS.md` is the cross-tool entry point. `CLAUDE.md`,
+`.cursor/rules/build-kit.mdc` and `.github/copilot-instructions.md` all
+point at it. `docs/porting.md` explains how to load a skill in Claude
+Code, Cursor, Codex, Copilot, Windsurf or a plain chat, and
+`scripts/port.sh` / `scripts/port.ps1` copy skills into a target repo in
+the layout Claude Code or Cursor expects.
+
+## Stacks
+
+The kit is framework-agnostic. `playbook/stack-picker.md` chooses one at
+minute zero; `templates/<stack>/` has a Dockerfile, a CI job snippet, a
+`.env.example` and an App Platform component for each of
+`python-fastapi`, `java-spring-boot`, `node-typescript`, `go`,
+`vite-react` and `nextjs`. The deploy and CI/CD skills carry per-stack
+tables for build, run, health, port and test commands.
 
 ## Skills
 
 Phases refer to the playbook: clarify (0-15 min), core (15-90), second
-feature or hardening (90-150), ship (150-180).
+feature or hardening (90-150), ship (150-180). "Stack" says whether a
+skill is generic or tied to one project's stack.
 
-| Skill | Purpose | Phase | Source |
-| --- | --- | --- | --- |
-| `grill-me` | Interrogate the task until the design is shared, then write `docs/designs/<slug>.md` | clarify | TechPulse |
-| `write-issue` | Turn one scoped piece of work into a ticket with testable acceptance criteria | clarify, second feature | TechPulse |
-| `write-prd` | PRD from a grill-me design context, for work bigger than one ticket | clarify (rarely in 3 hours) | TechPulse |
-| `test-app-e2e` | Black-box HTTP smoke battery (stdlib runner) that dispatches a fixer agent per failure | core, hardening | TechPulse |
-| `verify-feature` | Two gates: full lint/type/test loop, then an exhaustive Playwright click sweep | hardening | TechPulse |
-| `verify-techpulse` | Launch, run a read-only doctor, drive one user path, leave evidence outside the repo | ship (demo proof) | TechPulse |
-| `missions` | Orchestrator, worker and adversarial validator pattern for multi-hour runs | reference only; too heavy for 3 hours | TechPulse |
-| `graphify-new-project` | Code-only knowledge graph of a fresh repo, no LLM tokens | clarify (optional) | user-level |
-| `feature-brief` | Plain-words request to proposal with a validation contract | clarify | agent-os |
-| `feature-build` | Implement on a `req/<slug>` branch, small conventional commits, never push | core | agent-os |
-| `feature-validate` | Run every check command for real, first line `PASS` or `FAIL` | core, hardening | agent-os |
-| `feature-review` | Read-only review against the proposal, `PASS` or `FAIL` with named fixes | hardening | agent-os |
-| `coo-ideate` | Propose one well-argued feature a day from reading the repo | second feature (pick the next thing) | agent-os |
-| `heartbeat`, `ingest`, `lint`, `query`, `daily-digest` | agent-os runtime routines (wiki memory, health pulse, digest) | reference only; need the agent-os daemon | agent-os |
+| Skill | Purpose | Phase | Stack | Source |
+| --- | --- | --- | --- | --- |
+| `grill-me` | Interrogate the task until the design is shared, then write `docs/designs/<slug>.md` | clarify | any | TechPulse |
+| `write-issue` | Turn one scoped piece of work into a ticket with testable acceptance criteria | clarify, second feature | any | TechPulse |
+| `write-prd` | PRD from a grill-me design context, for work bigger than one ticket | clarify (rarely in 3 hours) | any | TechPulse |
+| `ci-cd-github-actions` | Minimal CI in the first commit, secret scan, branch protection, main-only deploy job, reading red runs | clarify | any (per-stack table) | new, distilled from four repos |
+| `deploy-digitalocean-app-platform` | `.do/app.yaml`, doctl create and logs, database binding, live URL, fallback, cleanup | ship | any (per-stack table) | new, research-backed |
+| `test-app-e2e` | Black-box HTTP smoke battery (stdlib runner) that dispatches a fixer agent per failure | core, hardening | pattern is generic; runner names TechPulse routes (Python FastAPI) | TechPulse |
+| `verify-feature` | Two gates: full lint/type/test loop, then an exhaustive Playwright click sweep | hardening | pattern is generic; commands are TechPulse (FastAPI + Vite) | TechPulse |
+| `verify-techpulse` | Launch, run a read-only doctor, drive one user path, leave evidence outside the repo | ship (demo proof) | TechPulse-specific (FastAPI + Vite); use as the pattern | TechPulse |
+| `missions` | Orchestrator, worker and adversarial validator pattern for multi-hour runs | reference only | any | TechPulse |
+| `graphify-new-project` | Code-only knowledge graph of a fresh repo, no LLM tokens | clarify (optional) | any (needs graphify installed) | user-level |
+| `feature-brief` | Plain-words request to proposal with a validation contract | clarify | any | agent-os |
+| `feature-build` | Implement on a `req/<slug>` branch, small conventional commits, never push | core | any | agent-os |
+| `feature-validate` | Run every check command for real, first line `PASS` or `FAIL` | core, hardening | any | agent-os |
+| `feature-review` | Read-only review against the proposal, `PASS` or `FAIL` with named fixes | hardening | any | agent-os |
+| `coo-ideate` | Propose one well-argued feature a day from reading the repo | second feature (pick the next thing) | any | agent-os |
+| `heartbeat`, `ingest`, `lint`, `query`, `daily-digest` | agent-os runtime routines (wiki memory, health pulse, digest) | reference only; need the agent-os daemon | n/a | agent-os |
 
 Notes on fidelity:
 
-- `test-app-e2e`, `verify-feature` and `verify-techpulse` were written for
-  the TechPulse repo and name its routes and ports. Use them as the
-  pattern (runner script, fix-area cheat sheet, doctor, feature map) and
-  swap the endpoints.
 - `missions` refers to `references/` and `briefings/` folders that were
-  never committed to the source repo. The SKILL.md is complete on its own;
-  the briefing templates have to be written before the skill is run.
+  never committed to the source repo. `skills/missions/README.md` lists
+  what is missing so an assistant does not stall looking for them.
 - The agent-os skills call `mcp__agentos__*` tools that only exist inside
-  the agent-os daemon. Their value here is the contract shape: payload in,
-  `PASS`/`FAIL` first line out, hard rules at the bottom.
+  the agent-os daemon. Each carries a portability note mapping those calls
+  to plain file reads and writes. Their value here is the contract shape:
+  payload in, `PASS`/`FAIL` first line out, hard rules at the bottom.
+- The two new skills (`ci-cd-github-actions`,
+  `deploy-digitalocean-app-platform`) cite the docs they were checked
+  against in their `references/` folder and mark the few fields that were
+  not verified.
 
 ## Agents
 
@@ -63,10 +80,26 @@ the outside against a behaviour spec). See `agents/README.md`.
 
 ## Templates
 
-`templates/` has the starter files a timed build always needs: a FastAPI
-plus SQLAlchemy plus pytest backend layout, a Vite plus React frontend
-layout, a GitHub Actions `ci.yml`, a `.env.example` pattern, a backend
-`Dockerfile`, and a DigitalOcean App Platform spec at `.do/app.yaml`.
+- `templates/ci.yml`: backend plus frontend jobs, secret scan.
+- `templates/ci-monorepo.yml`: pnpm workspaces variant.
+- `templates/deploy-do.yml`: main-only deploy to App Platform, or a GHCR image push.
+- `templates/do-app.yaml`: worked App Platform spec (service, static site, dev Postgres, migration job, ingress).
+- `templates/<stack>/`: `Dockerfile`, `ci-job.yml`, `.env.example`, `app-component.yaml`, and a short `README.md` for the backend and frontend stacks.
+
+## Tools verified
+
+- Claude Code: the kit's own layout (`skills/<name>/SKILL.md` with a
+  `description:` frontmatter, `agents/<name>/AGENT.md`) is the one Claude
+  Code reads once copied into `.claude/`. `scripts/port.sh all claude` and
+  `scripts/port.ps1 all claude` were run once on a temporary directory and
+  the resulting `.claude/skills/<name>/` tree was checked.
+- Cursor: `scripts/port.sh all cursor` and `port.ps1 all cursor` were run
+  once on a temporary directory; the `.cursor/rules/<name>.mdc` files were
+  checked for frontmatter and body, and `references/` and `scripts/`
+  folders were copied next to them.
+- Codex, Copilot, Windsurf: only the file layout (`AGENTS.md`,
+  `.github/copilot-instructions.md`) was prepared. Runtime behaviour
+  inside those tools was not exercised.
 
 ## Proof of work
 
@@ -78,7 +111,7 @@ Public repos where these skills were used:
 - TechPulse, an AI tech news aggregator (FastAPI, RAG, agentic research,
   knowledge graph; React frontend):
   https://github.com/ductringuyen-0618/ai-tech-news-assistant
-- salon-hub, a salon booking platform (API, UI and monorepo):
+- salon-hub, a salon booking platform (Spring Boot API, React UI, monorepo):
   https://github.com/ductringuyen-0618/salon-hub
 - portfolio-website, a React 19 portfolio with a client-side WebLLM
   assistant: https://github.com/ductringuyen-0618/portfolio-website
@@ -86,12 +119,16 @@ Public repos where these skills were used:
 ## Layout
 
 ```
-AGENTS.md            entry point for any assistant (CLAUDE.md is a copy)
-playbook/            3-hour-build.md
-skills/<name>/       SKILL.md plus references/, scripts/, examples/ where they exist
-agents/<name>/       AGENT.md
-templates/           backend, frontend, ci.yml, .env.example, Dockerfile, .do/app.yaml
-docs/                interview-format.md, third-party-skills.md
+AGENTS.md                 entry point for any assistant
+CLAUDE.md                 "read AGENTS.md" plus Claude Code notes
+.cursor/rules/            always-on Cursor rule pointing at AGENTS.md
+.github/                  copilot-instructions.md
+playbook/                 3-hour-build.md, stack-picker.md
+skills/<name>/            SKILL.md plus references/, scripts/, examples/, features/
+agents/<name>/            AGENT.md
+templates/                ci.yml, ci-monorepo.yml, deploy-do.yml, do-app.yaml, <stack>/
+scripts/                  port.sh, port.ps1
+docs/                     interview-format.md, third-party-skills.md, porting.md
 ```
 
 ## License

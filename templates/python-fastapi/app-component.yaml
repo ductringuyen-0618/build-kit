@@ -1,0 +1,32 @@
+# App Platform service component for a FastAPI backend in backend/.
+# Paste under `services:` in .do/app.yaml (see templates/do-app.yaml).
+# Buildpack variant: delete dockerfile_path, keep run_command; the buildpack
+# detects requirements.txt and sets PORT.
+  - name: api
+    github:
+      repo: OWNER/REPO
+      branch: main
+      deploy_on_push: true
+    source_dir: backend
+    dockerfile_path: backend/Dockerfile
+    # run_command: uvicorn src.main:app --host 0.0.0.0 --port $PORT
+    http_port: 8000
+    instance_count: 1
+    instance_size_slug: apps-s-1vcpu-1gb
+    health_check:
+      http_path: /health
+      initial_delay_seconds: 15
+    envs:
+      - key: ENVIRONMENT
+        scope: RUN_TIME
+        value: production
+      - key: DATABASE_URL
+        scope: RUN_TIME
+        value: ${db.DATABASE_URL}
+      - key: ALLOWED_ORIGINS
+        scope: RUN_TIME
+        value: ${APP_URL}
+      - key: ADMIN_TOKEN
+        scope: RUN_TIME
+        type: SECRET
+        value: ""

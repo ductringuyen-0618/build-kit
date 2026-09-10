@@ -1,0 +1,21 @@
+# CI job snippet for a Go service in backend/.
+# Paste under `jobs:` in .github/workflows/ci.yml.
+  backend:
+    name: Backend
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      ENVIRONMENT: testing
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+      - run: go mod download
+      - run: gofmt -l . | tee /dev/stderr | test -z "$(cat)"
+      - run: go vet ./...
+      - run: go test ./...
+      - run: go build -o bin/server ./cmd/server

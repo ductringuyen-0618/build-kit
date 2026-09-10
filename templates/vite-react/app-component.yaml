@@ -1,0 +1,15 @@
+# App Platform static site component for a Vite/React frontend in frontend/.
+# Paste under `static_sites:` in .do/app.yaml and route `/` to it in ingress.
+# No Dockerfile: the platform runs the build command and serves output_dir.
+  - name: web
+    github:
+      repo: OWNER/REPO
+      branch: main
+      deploy_on_push: true
+    source_dir: frontend
+    build_command: npm ci && npm run build
+    output_dir: dist            # match vite.config.ts build.outDir
+    envs:
+      - key: VITE_API_BASE_URL
+        scope: BUILD_TIME
+        value: ${APP_URL}
