@@ -56,7 +56,7 @@ present locally and absent in CI.
 Signal: a new runner starts and finds "Current" in the mission file
 pointing at a milestone with status `building`.
 
-1. `git log --oneline -20 req/<slug>` shows what the worker committed
+1. `git log --oneline -20 feature/<slug>` shows what the worker committed
    before dying. That is the truth; the hand-off may not exist.
 2. Re-brief the worker with "the branch exists; resume from its log, do
    not restart from scratch". The worker briefing already says this.

@@ -12,7 +12,7 @@ person or an assistant follows in any tool.
 
 ## Preconditions
 
-- The work is on a branch (`req/<slug>` or `feature/<slug>`), committed,
+- The work is on a branch (`feature/<slug>` or `feature/<slug>`), committed,
   with the scrutiny validator's `PASS` in hand and, for user-facing
   work, the user-testing validator's `PASS` too.
 - The branch has never been pushed by the worker. Pushing is this
@@ -36,8 +36,8 @@ person or an assistant follows in any tool.
 2. **Push and open the PR.**
 
    ```
-   git push -u origin req/<slug>
-   gh pr create --base main --head req/<slug> --title "feat: <title>" --body-file pr-body.md
+   git push -u origin feature/<slug>
+   gh pr create --base main --head feature/<slug> --title "feat: <title>" --body-file pr-body.md
    ```
 
    `pr-body.md` has, in order: the proposal's What you get and Why start
@@ -75,7 +75,7 @@ person or an assistant follows in any tool.
 4. **Read the failing job's log, not the summary.**
 
    ```
-   gh run list --branch req/<slug> --limit 3
+   gh run list --branch feature/<slug> --limit 3
    gh run view <run-id> --log-failed
    ```
 
@@ -111,7 +111,7 @@ field says "none", never blank.
 
 ```
 ## Shipped: <slug>
-- branch: req/<slug>   pr: <url>   merged: yes | no (kept for review)
+- branch: feature/<slug>   pr: <url>   merged: yes | no (kept for review)
 - ci: <check name>: pass ... run: <url>          (or: no CI on this PR, see note)
 - deployed: <url> | not deployed
 - commits:
@@ -124,7 +124,7 @@ field says "none", never blank.
 ```
 
 The report is the artefact the walkthrough reads from. The "what the AI
-got wrong" line is the one the interviewer is listening for.
+got wrong" line is the one a reviewer is listening for.
 
 ## Worked example (timed build, minute 155 to 168)
 
@@ -132,9 +132,9 @@ got wrong" line is the one the interviewer is listening for.
 $ grep -n -E '([A-Za-z]:\\|/home/|/Users)' validation.txt        # nothing
 $ git push -u origin req/booking-overlap
 $ gh pr create --base main --head req/booking-overlap --title "feat: reject overlapping bookings" --body-file pr-body.md
-https://github.com/<owner>/interview-app/pull/2
+https://github.com/<owner>/my-app/pull/2
 $ gh pr checks 2 --watch --interval 30
-Backend      fail   1m12s   https://github.com/<owner>/interview-app/actions/runs/1234
+Backend      fail   1m12s   https://github.com/<owner>/my-app/actions/runs/1234
 Secret scan  pass   22s     ...
 $ gh run view 1234 --log-failed | tail -60
 ...

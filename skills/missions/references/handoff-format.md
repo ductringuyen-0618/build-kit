@@ -8,7 +8,7 @@ everything after it is evidence.
 
 ```
 ## Worker hand-off: <slug>, attempt <n>
-- branch: req/<slug>
+- branch: feature/<slug>
 - head: <sha>
 - commits:
   - <sha> <message>
@@ -19,7 +19,7 @@ everything after it is evidence.
 ```
 
 Required: every line. The runner verifies `head` with `git rev-parse
-req/<slug>`; a mismatch is a failed hand-off.
+feature/<slug>`; a mismatch is a failed hand-off.
 
 ## Scrutiny validator
 
@@ -61,7 +61,7 @@ url: <url>   started by me: yes/no   vehicle: <browser|curl|smoke.py|playwright>
 
 ```
 ## Shipped: <slug>
-- branch: req/<slug>   pr: <url>   merged: yes/no
+- branch: feature/<slug>   pr: <url>   merged: yes/no
 - ci: <check name>: pass | fail | skipped   run: <url>
 - commits: <sha> <message> ...
 - validator findings: <verbatim first lines plus fixes applied>

@@ -20,7 +20,7 @@ correction is a new line.
 # Timelog
 start: 2026-09-09T14:00 local
 0   stack: python-fastapi (prompt is AI-flavoured; provider fake carries over)
-4   grill-me done, docs/designs/booking-rules.md
+4   grill-me done, docs/design.md
 9   issue written, 4 acceptance criteria
 14  scaffold green  https://github.com/<owner>/app/actions/runs/1
 15  COMMIT chore: scaffold service with health check, tests and ci
@@ -106,7 +106,7 @@ line below is a `VERIFIED` line in the timelog when done.
 - **Say the miss out loud.** When the assistant produces something
   confident and wrong, name it, fix it, and write one line in
   `docs/DECISIONS.md` under "what the AI got wrong". That line is the
-  one the interviewer wants to hear in the walkthrough.
+  one a reviewer wants to hear in the walkthrough.
 
 ## Working with an assistant under the clock
 
