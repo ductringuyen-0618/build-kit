@@ -1,6 +1,10 @@
-# GitHub Actions CI for a backend/ (FastAPI) + optional frontend/ (Vite) repo.
-# Copy to .github/workflows/ci.yml. Both jobs skip cleanly if their folder
-# does not exist, so this works for a backend-only service too.
+# GitHub Actions CI for a backend/ + optional frontend/ repo.
+# Copy to .github/workflows/ci.yml. The backend job below is the Python
+# FastAPI one; replace its steps with templates/<stack>/ci-job.yml for
+# java-spring-boot, node-typescript or go. The frontend job is Vite/React;
+# swap in templates/nextjs/ci-job.yml for Next.js. Both jobs skip cleanly if
+# their folder does not exist, so this works for a backend-only service.
+# pnpm monorepo: use templates/ci-monorepo.yml instead.
 
 name: CI
 
@@ -20,7 +24,7 @@ permissions:
 
 jobs:
   backend:
-    name: Backend lint, typecheck, test
+    name: Backend
     runs-on: ubuntu-latest
     timeout-minutes: 15
     defaults:
@@ -54,7 +58,7 @@ jobs:
         run: python -c "from src.main import app"
 
   frontend:
-    name: Frontend typecheck, lint, format, build
+    name: Frontend
     runs-on: ubuntu-latest
     timeout-minutes: 15
     defaults:

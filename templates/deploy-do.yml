@@ -1,0 +1,68 @@
+# Deploy job: runs only on main, only after the CI workflow succeeded.
+# Copy to .github/workflows/deploy.yml. Two variants; delete the one not used.
+#
+# The human creates the DIGITALOCEAN_ACCESS_TOKEN repository secret
+# (Settings > Secrets and variables > Actions). The assistant never
+# handles the token value.
+
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: [CI]
+    branches: [main]
+    types: [completed]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-main
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  # Variant A: DigitalOcean App Platform via the official action.
+  # Reads .do/app.yaml, creates the app on first run, updates it afterwards.
+  app-platform:
+    name: Deploy to App Platform
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy
+        id: deploy
+        uses: digitalocean/app_action/deploy@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+          print_build_logs: true
+          print_deploy_logs: true
+      - name: Print live URL
+        run: echo '${{ steps.deploy.outputs.app }}' | jq -r '.default_ingress // .live_url // empty'
+
+  # Variant B: build the backend image and push it to GHCR. Any host that
+  # pulls images (App Platform image block, a Droplet, Fly, Render) can use it.
+  ghcr-image:
+    name: Push image to GHCR
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: backend
+          file: backend/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}/api:latest
+            ghcr.io/${{ github.repository }}/api:${{ github.sha }}
