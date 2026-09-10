@@ -55,7 +55,7 @@ jobs:
       - name: Test
         run: pytest -q                                   # CHANGE
       - name: Build
-        run: python -c "import src.main"                 # CHANGE: build command; for Python, import the app module as a smoke check
+        run: python -c "import src.main"                 # CHANGE: build command; src.main is a placeholder for the app module (Python imports it as a smoke check)
 
   frontend:
     name: Frontend            # CHANGE: status-check name, as above

@@ -35,7 +35,7 @@ services:
     dockerfile_path: backend/Dockerfile
     # Buildpack instead of Dockerfile: delete dockerfile_path and set
     #   build_command: npm ci && npm run build        # if the stack needs one
-    #   run_command: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    #   run_command: uvicorn app.main:app --host 0.0.0.0 --port $PORT   # CHANGE: app.main:app is a placeholder for the app module
     http_port: 8080            # the port the process listens on
     instance_count: 1
     instance_size_slug: apps-s-1vcpu-1gb
