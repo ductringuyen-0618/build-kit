@@ -1,36 +1,48 @@
-# DigitalOcean App Platform spec. Copy to .do/app.yaml at the repo root.
-#   doctl apps create --spec .do/app.yaml
-#   doctl apps get <app-id> --format DefaultIngress
+# DigitalOcean App Platform spec. Copy to .do/app.yaml at the repo root, then:
+#   doctl apps spec validate .do/app.yaml
+#   doctl apps create --spec .do/app.yaml --format ID,DefaultIngress
+#   doctl apps get <app-id> --format DefaultIngress --no-header
 #   doctl apps update <app-id> --spec .do/app.yaml
-# Reference: https://docs.digitalocean.com/products/app-platform/reference/app-spec/
+# Field reference: https://docs.digitalocean.com/products/app-platform/reference/app-spec/
 #
-# Worked example: one web service (api) + one static site (web) + one dev
-# Postgres database (db) + one pre-deploy migration job, all under one URL.
-# Per-stack component snippets live in templates/<stack>/app-component.yaml;
-# swap the `api` block for the stack in use.
+# Layout: one web service (api) built from a Dockerfile, one static site
+# (web), one dev Postgres database (db), one pre-deploy migration job, and
+# an ingress that serves everything under one URL. Delete what you do not
+# need. Ready-made `api` blocks per stack are in templates/<stack>/app-component.yaml
+# and Dockerfiles in templates/<stack>/Dockerfile.
+#
+# Per-stack values for the api block:
+#   Python        http_port 8000  health /health           initial_delay 15
+#   Node/TS       http_port 8080  health /health           initial_delay 10
+#   Go            http_port 8080  health /healthz          initial_delay 5
+#   Spring Boot   http_port 8080  health /actuator/health  initial_delay 40
+#   Next.js       http_port 3000  health /api/health       initial_delay 10 (a service, not a static site)
 #
 # Secrets: never put values here. Declare the key with type SECRET and an
-# empty value, then set it in the control panel (or paste the EV[...] text
-# the panel produces). ${...} values are bindable variables the platform fills.
+# empty value, then set it in the control panel. ${...} values are bindable
+# variables the platform fills in at deploy time.
 
-name: interview-app
-region: nyc
+name: my-app
+region: nyc          # doctl apps list-regions --format Slug
 
 services:
   - name: api
     github:
-      repo: OWNER/REPO
+      repo: OWNER/REPO         # owner/name on GitHub
       branch: main
-      deploy_on_push: true
-    source_dir: backend
-    dockerfile_path: backend/Dockerfile   # remove to use the buildpack
-    # run_command: uvicorn src.main:app --host 0.0.0.0 --port $PORT   # buildpack only
-    http_port: 8000
+      deploy_on_push: true     # redeploy on every push to branch
+    source_dir: backend        # folder the build runs in
+    dockerfile_path: backend/Dockerfile
+    # Buildpack instead of Dockerfile: delete dockerfile_path and set
+    #   build_command: npm ci && npm run build        # if the stack needs one
+    #   run_command: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    http_port: 8080            # the port the process listens on
     instance_count: 1
     instance_size_slug: apps-s-1vcpu-1gb
     health_check:
       http_path: /health
       initial_delay_seconds: 15
+      timeout_seconds: 3       # raise if the handler pings the database
     envs:
       - key: ENVIRONMENT
         scope: RUN_TIME
@@ -38,15 +50,17 @@ services:
       - key: DATABASE_URL
         scope: RUN_TIME
         value: ${db.DATABASE_URL}
+        # Spring Boot: use ${db.JDBC_DATABASE_URL}, ${db.USERNAME}, ${db.PASSWORD}
       - key: ALLOWED_ORIGINS
         scope: RUN_TIME
         value: ${APP_URL}
-      - key: ADMIN_TOKEN
+      - key: API_SECRET
         scope: RUN_TIME
         type: SECRET
         value: ""
 
-# Remove this block for a backend-only service.
+# Frontend as a static site. Delete this block for a backend-only app;
+# for Next.js use a second `services` entry instead (see templates/nextjs).
 static_sites:
   - name: web
     github:
@@ -55,13 +69,14 @@ static_sites:
       deploy_on_push: true
     source_dir: frontend
     build_command: npm ci && npm run build
-    output_dir: dist          # Vite default; match vite.config.ts build.outDir
+    output_dir: dist           # Vite default; Create React App uses build
     envs:
-      - key: VITE_API_BASE_URL
+      - key: VITE_API_BASE_URL # the frontend's build-time API base URL
         scope: BUILD_TIME
         value: ${APP_URL}
 
-# One public URL: /api and /health go to the service, everything else to the site.
+# One public URL: /api and /health go to the service, everything else to
+# the site. Backend-only: delete the web rule and route prefix / to api.
 ingress:
   rules:
     - component:
@@ -83,12 +98,15 @@ ingress:
           prefix: /
 
 # Dev database: cheapest managed Postgres, provisioned with the app.
+# Add `version: "16"` to pin; `production: true` + `cluster_name` attaches
+# an existing managed cluster.
 databases:
   - name: db
     engine: PG
     production: false
 
-# Migrations before each deploy. Remove if the container runs them on start.
+# Migrations before each deploy. Delete this job if the container runs
+# them on start (the kit's Python and Spring Boot Dockerfiles do).
 jobs:
   - name: migrate
     kind: PRE_DEPLOY
@@ -98,6 +116,10 @@ jobs:
     source_dir: backend
     dockerfile_path: backend/Dockerfile
     run_command: alembic upgrade head
+    # Node (Prisma):  npx prisma migrate deploy
+    # Node (Drizzle): npx drizzle-kit migrate
+    # Go:             migrate -path migrations -database "$DATABASE_URL" up
+    # Spring Boot:    Flyway runs on boot; delete this job
     envs:
       - key: DATABASE_URL
         scope: RUN_TIME
