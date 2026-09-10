@@ -1,184 +1,139 @@
 ---
 name: grill-me
-description: Interrogative planning skill that forces Claude to relentlessly ask clarifying questions BEFORE producing any design, plan, code, or document. Use this whenever the user wants to plan a new feature, system, refactor, migration, integration, architecture, or product change - even if the request seems clear. Trigger phrases include "let's plan", "design X", "I want to build", "thinking about adding", "should we refactor", "how should we approach", "grill me", "interview me about". The output is a shared "design context" markdown file that downstream skills (write-prd, write-issue, ADRs, implementation) consume so the AI and the user actually share the same picture before any work happens.
+description: Use before designing, planning, or coding any non-trivial change; asks the user the questions that matter, one at a time, until the design is shared, then writes docs/design.md for write-prd, write-issue, and the build to consume.
 ---
 
-# grill-me — interrogative planning
+# grill-me
 
-Most LLM planning failures come from one bad habit: assuming context instead of
-asking for it. This skill exists to break that habit. When the user wants to
-plan something, **do not start writing the plan**. Instead, ask questions until
-you can articulate the design back to the user with confidence — and they
-agree with that articulation.
+## Purpose
 
-The deliverable is a markdown file at `docs/designs/<slug>.md` that captures
-the shared understanding. Other skills (`write-prd`, `write-issue`,
-implementation tasks) read that file as input.
+Most planning failures come from one habit: assuming context instead of
+asking for it. This skill breaks the habit. When the user wants to plan or
+build something, do not start writing the plan. Ask questions until you can
+state the design back to the user and they agree with it. Then write the
+shared understanding to `docs/design.md` so every later step reads the
+same picture.
 
-## When to use this
+Works in any agent tool and any stack. It needs only the ability to ask
+the user a question and write a file.
 
-- User says "let's plan", "design", "I want to build", "thinking about", "how
-  should we approach", or describes a non-trivial change
-- Before writing a PRD, an issue, an ADR, or starting implementation
-- After receiving a vague directive like "make the dashboard faster"
-- When the user asks for code that touches more than one file or system
+## When to use
 
-## When NOT to use this
+- The user says "let's plan", "design X", "I want to build", "how should
+  we approach", "grill me", or describes a change that touches more than
+  one file or system.
+- Before `write-prd`, `write-issue`, an architecture decision, or
+  implementation of anything non-trivial.
+- After a vague directive such as "make it faster".
 
-- Tiny, well-scoped tasks (rename a variable, add a type annotation)
-- The user is asking a factual question, not requesting work
-- A previous grill-me session already produced a context file for this topic
-  and the user wants to pick up where it left off
+## When not to use
 
-## Workflow
+- Tiny, well-scoped tasks (rename, type annotation, one-line fix). Just do it.
+- The user asked a factual question, not for work.
+- `docs/design.md` already covers this topic and the user wants to
+  continue from it.
 
-### Step 0 — Restrain yourself
+## Inputs
 
-Before doing anything, **acknowledge the topic without committing to a plan**.
-A single sentence: "Before I sketch anything, I want to make sure we're
-aligned on a few things." Do not propose architecture. Do not list options.
-Do not write code. The single most important thing this skill does is buy
-time for questions.
+- The user's request, however vague.
+- The repo, if one exists. Read it before asking anything it can answer
+  (stack, existing routes, schema, test setup).
+- `references/question-categories.md` when you are unsure what to ask next.
 
-### Step 1 — First batch of questions (the core dimensions)
+## Steps
 
-Ask 3–4 questions at once using the `AskUserQuestion` tool (when available in
-this environment). Pick from the categories in
-`references/question-categories.md`, prioritising the ones least obvious from
-the user's request. A good first batch usually covers:
+### 1. Hold back
 
-- The **goal behind the goal** ("you want X — what does X get you that you
-  don't already have?")
-- The **users** (who actually triggers / sees / cares about this?)
-- The **scope** (what's in vs. explicitly out?)
-- The **success criterion** (how will we know this worked?)
+Acknowledge the topic in one sentence without proposing anything:
+"Before I sketch anything, I want to make sure we agree on a few things."
+No architecture, no option list, no code.
 
-Avoid yes/no questions. Multi-choice with 2–4 distinct options is best —
-people pick faster than they generate.
+### 2. Ask one question at a time
 
-### Step 2 — Second batch (constraints + edges)
+Ask a single question, wait for the answer, then choose the next question
+based on it. If your tool offers a structured multiple-choice prompt, use
+it, but still one question per turn. Offer 2 to 4 concrete options where
+you can; people pick faster than they generate. Avoid yes/no questions.
 
-After the first answers, ask 2–4 more, focused on the dimensions the answers
-exposed. Common follow-ups:
+Start with the dimensions least obvious from the request. A good opening
+sequence:
 
-- **Constraints** — time, tech stack, compatibility, budget, security
-- **Data shape** — inputs, outputs, sources of truth, freshness
-- **Existing systems** — what does this touch, integrate with, replace?
-- **Failure modes** — what's the worst that happens when this breaks?
-- **Alternatives considered** — what did the user already rule out and why?
+1. The goal behind the goal: what does this get you that you lack today?
+2. The users: who triggers it, sees it, or is affected?
+3. Scope: what is in, and what is explicitly out?
+4. The success criterion: how will we know it worked?
 
-### Step 3 — Keep going until the user signals stop
+Then follow the answers into constraints, data shape, affected systems,
+failure modes, and alternatives already rejected. Plan on 6 to 12
+questions in total. The user may stop you at any point with "that's
+enough" or "just write it"; respect that immediately.
 
-This is the part that makes this skill different from "ask one clarifying
-question and move on". Plan to ask 2–4 batches (8–16 questions total) before
-stopping. The user is allowed to short-circuit by saying "ok that's enough"
-or "stop, just write it" — respect that immediately.
+Stop early when all of these are true:
 
-Stop earlier if **all** of these are true:
-- You can describe the goal in one sentence the user would endorse
-- You know the explicit non-goals
-- You know the success criterion
-- You know what existing code/systems are affected
-- You can name at least one failure mode and how it's handled
+- You can state the goal in one sentence the user would endorse.
+- You know the explicit non-goals.
+- You know the success criterion.
+- You know which existing code or systems are affected.
+- You can name at least one failure mode and how it is handled.
 
-### Step 4 — Articulate back, ask for the green light
+### 3. Play it back
 
-Before writing the design file, summarise the shared understanding inline in
-chat (8–15 lines, not a wall of text). Ask: "Does this match what you have
-in your head?" Wait for confirmation or correction. Iterate if needed.
+Summarise the shared understanding in chat in 8 to 15 lines. Ask "does
+this match what you have in your head?" Correct and repeat until the user
+says yes.
 
-### Step 5 — Write the design context file
+### 4. Write `docs/design.md`
 
-Save to `docs/designs/<slug>.md` where `<slug>` is a short kebab-case
-identifier the user agrees with. Use this exact structure so downstream
-skills can parse it:
+Create the `docs/` folder if needed. Use the structure in
+`references/design-template.md` so `write-prd` and `write-issue` can find
+each section. Keep the conversation log; it saves re-asking later.
 
-```markdown
-# Design context: <one-line title>
+If the repo already has a `docs/design.md` for a different topic, write
+`docs/design-<slug>.md` instead and say so.
 
-> Generated by grill-me on <ISO date>. Source for downstream PRD/issue work.
+### 5. Hand off
 
-## Goal
-<1–2 sentences. The thing we want to be true after this work ships.>
+Say: "Saved to `docs/design.md`. Next: `write-issue` if this is one
+ticket's worth of work, or `write-prd` if it is larger."
 
-## Why now
-<The pressure or opportunity that makes this worth doing now vs. later.>
+## Outputs
 
-## Users
-- **Primary**: <who triggers / depends on this>
-- **Secondary**: <who's affected but not the main audience>
+- `docs/design.md` (or `docs/design-<slug>.md`), following the template.
+- A short chat summary the user has agreed to.
 
-## Scope
-**In scope:**
-- <bullet>
-- <bullet>
+## In a 3-hour build
 
-**Out of scope (explicit non-goals):**
-- <bullet>
-- <bullet>
-
-## Success criteria
-<How we'll know this worked. Concrete, observable, ideally measurable.>
-
-## Constraints
-- **Tech**: <existing stack, frameworks, languages>
-- **Time**: <deadline or pace>
-- **Compatibility**: <what must keep working>
-- **Other**: <budget, headcount, security, regulatory>
-
-## Affected surfaces
-<Which parts of the system this touches: routes, services, DB tables, UI
-components, external services, etc.>
-
-## Data
-- **Inputs**: <where data comes from>
-- **Outputs**: <where data goes>
-- **Source of truth**: <which system is canonical>
-
-## Failure modes & handling
-- <Risk 1>: <how we'll handle / mitigate>
-- <Risk 2>: <how we'll handle / mitigate>
-
-## Alternatives considered (and rejected)
-- <Alternative>: <why we said no>
-
-## Open questions
-<Things you and the user agreed to defer. List them so the next step doesn't
-re-litigate them.>
-
-## Conversation log
-<Append a compact list of the Q&A you ran. Future maintainers will thank you.>
-- Q: <question> | A: <user's answer>
-```
-
-After writing the file, hand off:
-
-> "Saved to `docs/designs/<slug>.md`. From here you can run `write-prd` for a
-> full product doc or `write-issue` if this is one ticket-sized chunk."
+Budget 5 to 10 minutes. Ask 5 to 8 questions, not 12. Cover goal, users,
+scope in/out, success criterion, and one failure mode; skip operations,
+compliance, and long-horizon metrics. If the task brief already answers a
+question, state your reading of it and move on rather than asking. Answer
+questions yourself out loud when the user is an observer rather than a
+collaborator, and record those answers as assumptions in the design file.
+Write the file in one pass; do not polish it.
 
 ## Style rules
 
-- **One question at a time, max four.** Don't dump a list of 20.
-- **Default to multi-choice.** Show the user the option space; people pick
-  faster than they articulate from scratch.
-- **Resist proposing.** If you find yourself starting an answer with
-  "I think we should…", stop and turn it into a question instead.
-- **Don't be precious about the file.** The design context is a working
-  document, not a publication. It can be edited later. The goal is shared
-  understanding now, not perfect prose.
-- **Trust the user's "stop".** When the user says they're satisfied, write
-  the file with what you have and move on. Don't argue.
+- One question per turn. Never dump a list of ten.
+- Prefer multiple choice with distinct options over open-ended prompts.
+- Resist proposing. If you start a sentence with "I think we should",
+  turn it into a question.
+- Read the codebase before asking anything it can answer.
+- Do not ask the same dimension twice in different words.
+- Prefer a concrete "what" over a philosophical "why".
+- The design file is a working document, not a publication. Shared
+  understanding now beats perfect prose.
+- Trust the user's "stop". Write the file with what you have.
 
-## Anti-patterns to avoid
+## Done when
 
-- Asking the same dimension twice in different words (no value, just friction)
-- Asking philosophical "why" questions when a concrete "what" would work
-- Asking questions Claude can answer itself by reading the codebase (read first)
-- Treating every question as equal weight — prioritise the dimensions that
-  most affect downstream decisions
+- The user has confirmed the played-back summary.
+- `docs/design.md` exists with every template section filled or marked
+  "not applicable".
+- Open questions are listed rather than silently assumed.
 
 ## Bundled files
 
-- `references/question-categories.md` — the question taxonomy. Open this
-  when you're stuck on what to ask next, or to make sure you've covered
-  the high-leverage dimensions.
+- `references/design-template.md`: the design file structure plus a short
+  filled example.
+- `references/question-categories.md`: the question taxonomy, with the
+  five to ask when time is short.
