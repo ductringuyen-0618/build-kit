@@ -25,7 +25,12 @@ Skills are plain Markdown at `skills/<name>/SKILL.md`. Reference one with
 - `test-app-e2e`: black-box HTTP smoke runner with a fix-area tag per failure.
 - `verify-feature`: full lint/type/test loop, then an exhaustive click sweep.
 - `verify-techpulse`: launch, doctor, drive one path, leave evidence (TechPulse-specific example).
-- `missions`: orchestrator, worker and validator pattern for multi-hour runs (reference).
+- `missions`: orchestrator, worker and validator pattern; its `briefings/` (runner, worker, scrutiny, user-testing) paste into a fresh chat.
+- `scaffold-service`: minute 0-15, skeleton to first green CI run, per-stack commands.
+- `smoke-verify`: stdlib `scripts/smoke.py`, contract to HTTP checks, run locally and against the deployed URL.
+- `ship-gate`: push, PR, wait for CI, read the failing log, one fix, then the shipped report.
+- `walkthrough-prep`: `docs/DECISIONS.md` as you go, then the walkthrough script with DigitalOcean-grounded scaling answers.
+- `timebox`: `docs/TIMELOG.md`, commit every fifteen minutes, cut rules, verify-before-trust list.
 - `graphify-new-project`: code-only knowledge graph of a fresh repo.
 - `coo-ideate`, `heartbeat`, `ingest`, `lint`, `query`, `daily-digest`: agent-os runtime skills (reference).
 

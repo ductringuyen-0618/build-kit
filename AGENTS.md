@@ -62,38 +62,53 @@ These are how Tri works. They are not suggestions.
 The order is the same for a backend-only service and a full-stack app.
 Steps marked "full-stack" are skipped when there is no UI.
 
-1. `playbook/stack-picker.md`: choose the stack in one minute. Say it out
-   loud and write it at the top of `docs/demo-notes.md`.
-2. `skills/grill-me`: five to eight questions, then `docs/designs/<slug>.md`.
+1. `skills/timebox`: start the clock. Create `docs/TIMELOG.md`, read the
+   cut rules and the verify-before-trust list once. Commit every fifteen
+   minutes from here on.
+2. `playbook/stack-picker.md`: choose the stack in one minute. Say it out
+   loud and write it at the top of `docs/demo-notes.md` and as the first
+   entry in `docs/DECISIONS.md`.
+3. `skills/grill-me`: five to eight questions, then `docs/designs/<slug>.md`.
    Stop as soon as goal, non-goals, success criterion, affected surfaces
    and one failure mode are known.
-3. `skills/write-issue`: one issue for the core feature with three to six
-   acceptance criteria. That list is the definition of done.
-4. Scaffold from `templates/<stack>/` (Dockerfile, CI job, `.env.example`,
-   App Platform component) and `skills/ci-cd-github-actions` for the
-   workflow file and branch protection. First commit: scaffold, health
-   endpoint, one passing test, CI green.
-5. Full-stack: scaffold the frontend from `templates/vite-react/` or
+4. `skills/write-issue`: one issue for the core feature with three to six
+   acceptance criteria. That list is the definition of done and, in the
+   shape of `skills/missions/references/validation-contract-template.md`,
+   the validation contract.
+5. `skills/scaffold-service`: minute 0 to 15. Skeleton from
+   `templates/<stack>/`, settings module, health endpoint that checks the
+   database, one real test, README run section, `.env.example`,
+   Dockerfile, CI workflow (`skills/ci-cd-github-actions`), `.do/app.yaml`,
+   first commit `chore: scaffold ...`, CI green, branch protection.
+6. Full-stack: scaffold the frontend from `templates/vite-react/` or
    `templates/nextjs/` and wire the API base URL from an environment
    variable with a same-origin fallback.
-6. Build with tests first. `skills/feature-build` for branch and commit
+7. Build with tests first. `skills/feature-build` and
+   `skills/missions/briefings/worker.md` for branch and commit
    discipline; if the `superpowers` plugin is installed, its
    `test-driven-development` skill; otherwise failing test, then code.
-7. `skills/feature-validate` shape for every check run: run each command
-   for real, report exit code and tail, first line `PASS` or `FAIL`.
-8. `skills/test-app-e2e` pattern: a small stdlib runner that hits the
-   running service over HTTP and tags each failure with a fix area. Adapt
-   the endpoint list; keep the runner shape.
-9. `skills/feature-review`: read the diff against the issue's acceptance
-   criteria before calling it done.
-10. Full-stack: `skills/verify-feature` second gate, an exhaustive click
-    sweep that watches for uncaught errors and `console.error`. Without
-    Playwright, drive the three main flows by hand and record what was
-    clicked.
-11. `skills/deploy-digitalocean-app-platform`: spec, create, logs, live
-    URL, then the doctor-then-drive-then-evidence loop from
-    `skills/verify-techpulse` against the public URL.
-12. README, `docs/demo-notes.md`, final commit, CI green, browser tab open.
+8. `skills/feature-validate` shape for every check run, or brief a fresh
+   session with `skills/missions/briefings/validator-scrutiny.md`: run
+   each command for real, report exit code and tail, first line `PASS`
+   or `FAIL`.
+9. `skills/smoke-verify`: turn the contract into `smoke.json` and run
+   `scripts/smoke.py` against the local server after every feature. This
+   replaces adapting `test-app-e2e` or `verify-feature` under the clock.
+10. `skills/feature-review`, or `skills/missions/briefings/validator-user-testing.md`
+    for anything user-facing: read the diff against the contract, then
+    drive the running app and score each behavioural assertion.
+11. Full-stack: if Playwright is on the machine, the `skills/verify-feature`
+    click sweep; otherwise drive the three main flows by hand and record
+    what was clicked in the demo notes.
+12. `skills/deploy-digitalocean-app-platform`: spec, create, logs, live
+    URL, then `skills/smoke-verify` against the public URL with the
+    output pasted into `docs/demo-notes.md`.
+13. `skills/ship-gate`: push, PR with the contract and validator output
+    in the body, wait for CI, read the failing log, one fix, then the
+    shipped report. Zero checks is not green.
+14. `skills/walkthrough-prep`: from minute 170, turn `docs/DECISIONS.md`
+    and the timelog into the walkthrough script; scaling answers from
+    its references file. README, final commit, CI green, browser tab open.
 
 ## Agents
 
@@ -115,4 +130,5 @@ agent-os daemon and are reference material here.
 Where a skill names a Claude-only tool (`AskUserQuestion`, the `Agent`
 tool, `mcp__agentos__*` syscalls), treat the name as the intent and use
 whatever the current tool offers: ask the human in chat, open a second
-session, read or write the file directly.
+session, read or write the file directly. `docs/how-tri-builds.md`
+explains where the loop above came from and which real runs shaped it.

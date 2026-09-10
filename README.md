@@ -48,7 +48,12 @@ skill is generic or tied to one project's stack.
 | `test-app-e2e` | Black-box HTTP smoke battery (stdlib runner) that dispatches a fixer agent per failure | core, hardening | pattern is generic; runner names TechPulse routes (Python FastAPI) | TechPulse |
 | `verify-feature` | Two gates: full lint/type/test loop, then an exhaustive Playwright click sweep | hardening | pattern is generic; commands are TechPulse (FastAPI + Vite) | TechPulse |
 | `verify-techpulse` | Launch, run a read-only doctor, drive one user path, leave evidence outside the repo | ship (demo proof) | TechPulse-specific (FastAPI + Vite); use as the pattern | TechPulse |
-| `missions` | Orchestrator, worker and adversarial validator pattern for multi-hour runs | reference only | any | TechPulse |
+| `missions` | Orchestrator, worker and adversarial validator pattern; `briefings/` (runner, worker, scrutiny validator, user-testing validator) and `references/` are usable on their own in a timed build | core, hardening (briefings); full pattern is reference | any | TechPulse; briefings written from agent-os runs |
+| `scaffold-service` | Minute 0-15: skeleton, settings module, health check that touches the database, one real test, README, `.env.example`, Dockerfile, CI job, `.do/app.yaml`, first commit, CI green | clarify | any (per-stack table) | new |
+| `smoke-verify` | `scripts/smoke.py`, a stdlib HTTP checker: base URL plus a JSON or inline list of GET/POST checks, PASS/FAIL per check, exit code; run locally after every feature and against the deployed URL before the demo | core, hardening, ship | any (per-stack table) | new; replaces `test-app-e2e`/`verify-feature` under a clock |
+| `ship-gate` | Scrub, push, PR, wait for CI, read the failing log, one fix attempt, then the shipped report; zero checks is not green | ship | any | new, lifted from agent-os's CI gate and the COO routine |
+| `walkthrough-prep` | `docs/DECISIONS.md` as you go, then the six-part walkthrough script; scaling answers grounded in App Platform, Managed Postgres, Valkey, Spaces and Load Balancer docs (URLs in `references/`) | ship, walkthrough | any (per-stack notes) | new, doc-checked |
+| `timebox` | `docs/TIMELOG.md`, commit every fifteen minutes, cut rules at 45/85/90/120/140/150/160/170, the verify-before-trust list | every phase | any | new, from the playbook and the interview write-up |
 | `graphify-new-project` | Code-only knowledge graph of a fresh repo, no LLM tokens | clarify (optional) | any (needs graphify installed) | user-level |
 | `feature-brief` | Plain-words request to proposal with a validation contract | clarify | any | agent-os |
 | `feature-build` | Implement on a `req/<slug>` branch, small conventional commits, never push | core | any | agent-os |
@@ -59,17 +64,21 @@ skill is generic or tied to one project's stack.
 
 Notes on fidelity:
 
-- `missions` refers to `references/` and `briefings/` folders that were
-  never committed to the source repo. `skills/missions/README.md` lists
-  what is missing so an assistant does not stall looking for them.
+- `missions`'s `references/`, `briefings/` and `examples/` were never
+  committed to the source repo; they were written for this kit from the
+  agent-os feature-request workflow and the COO routine that shipped real
+  features. `docs/how-tri-builds.md` is the evidence trail;
+  `skills/missions/README.md` says how to use them.
 - The agent-os skills call `mcp__agentos__*` tools that only exist inside
   the agent-os daemon. Each carries a portability note mapping those calls
   to plain file reads and writes. Their value here is the contract shape:
   payload in, `PASS`/`FAIL` first line out, hard rules at the bottom.
-- The two new skills (`ci-cd-github-actions`,
-  `deploy-digitalocean-app-platform`) cite the docs they were checked
-  against in their `references/` folder and mark the few fields that were
-  not verified.
+- The new skills (`ci-cd-github-actions`,
+  `deploy-digitalocean-app-platform`, `walkthrough-prep`) cite the docs
+  they were checked against in their `references/` folder and mark the
+  few fields that were not verified. `smoke-verify`'s script was run
+  against a local test server for the pass, fail, unreachable and
+  JSON-report paths.
 
 ## Agents
 
@@ -128,7 +137,7 @@ skills/<name>/            SKILL.md plus references/, scripts/, examples/, featur
 agents/<name>/            AGENT.md
 templates/                ci.yml, ci-monorepo.yml, deploy-do.yml, do-app.yaml, <stack>/
 scripts/                  port.sh, port.ps1
-docs/                     interview-format.md, third-party-skills.md, porting.md
+docs/                     interview-format.md, how-tri-builds.md, third-party-skills.md, porting.md
 ```
 
 ## License

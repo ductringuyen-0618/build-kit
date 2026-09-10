@@ -47,8 +47,10 @@ its body.
 ## Plain chat
 
 Paste `AGENTS.md`, then the `SKILL.md` for the current phase. Skills with
-`scripts/` (test-app-e2e, verify-techpulse, graphify-new-project) need the
-script run locally; paste the script's output back.
+`scripts/` (smoke-verify, test-app-e2e, verify-techpulse,
+graphify-new-project) need the script run locally; paste the script's
+output back. The `missions/briefings/` files are meant to be pasted
+whole into a fresh chat, one per role.
 
 ## What was verified
 
