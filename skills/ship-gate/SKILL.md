@@ -1,14 +1,14 @@
 ---
 name: ship-gate
-description: The last step before anything is called shipped. Push the branch, open the pull request with the contract and validator output in the body, wait for CI with gh pr checks --watch or by polling statusCheckRollup, read the failing job's log, make exactly one fix attempt with that log as input, and only after a green run write the shipped report (what shipped, commits, validator findings, reviewer notes, PR and CI URLs). Use when asked to "ship it", "open the PR", "is CI green", "mark it done", or whenever the word shipped is about to be written.
+description: Push, open the pull request, wait for CI, read the failing job log, make one fix attempt, and only after a green run write the shipped report; use before saying done or shipped.
 ---
 
 # Ship gate: nothing is shipped until CI is green
 
-Local checks are necessary, never sufficient. The rule comes from the
-agent-os feature-request workflow and Tri's COO routine, both of which
-refuse to write `shipped` on hope. This skill is that rule as a
-checklist a person or an assistant follows in any tool.
+Local checks are necessary, never sufficient. An automated pipeline
+that refuses to write `shipped` until the pull request's checks are
+green is the origin of this skill; this is that rule as a checklist a
+person or an assistant follows in any tool.
 
 ## Preconditions
 
@@ -25,8 +25,8 @@ checklist a person or an assistant follows in any tool.
 1. **Scrub before you push.** The validator output you are about to put
    in a PR body was produced on a local machine. Search it for absolute
    paths, usernames, tokens and email addresses and replace them with
-   `<path>` or drop the line. A real run of this loop pasted a local
-   clone path into a public pull request; do not repeat it.
+   `<path>` or drop the line. Validator output has ended up in a public
+   pull request with a local clone path in it; do not repeat that.
 
    ```
    grep -n -E '([A-Za-z]:\\|/home/|/Users)[^ ]*' validation.txt
@@ -63,10 +63,11 @@ checklist a person or an assistant follows in any tool.
 
    **Zero checks is not green.** If the rollup is empty, the repo has no
    workflow that runs on pull requests (a deploy-on-push workflow does
-   not count). A real run of this loop reported "CI passed" over an
-   empty list. Say "no CI on this PR" in the report and either add the
-   workflow from `skills/ci-cd-github-actions` now or ship with that
-   sentence in the report. Never write "CI passed" with nothing listed.
+   not count). Automated gates have reported "CI passed" over an empty
+   list. Say "no CI on this PR" in the report and either add a workflow
+   that runs lint, tests and build on `pull_request` now, or ship with
+   that sentence in the report. Never write "CI passed" with nothing
+   listed.
 
    Skipped checks are fine. Any `FAILURE`, `TIMED_OUT` or `CANCELLED`
    is not.
@@ -83,12 +84,14 @@ checklist a person or an assistant follows in any tool.
    the log is a guess.
 
 5. **One fix attempt.** Brief the worker (yourself, or a fresh session
-   with `skills/missions/briefings/worker.md`) with the log tail as the
-   prior failure and the instruction "make this exact job pass". Commit
-   as `fix:` or `style:`, push, and go back to step 3. The three usual
-   causes and their one-line fixes are in `skills/ci-cd-github-actions`
-   section 5: formatter drift, lockfile mismatch, an environment variable
-   missing in the job.
+   with the worker briefing from the `missions` skill) with the log tail
+   as the prior failure and the instruction "make this exact job pass".
+   Commit as `fix:` or `style:`, push, and go back to step 3. The three
+   usual causes: formatter drift (run the formatter, commit
+   `style: format`), lockfile mismatch (run the install once without
+   `--frozen`/`ci`, commit the lockfile), an environment variable present
+   locally and absent in the job (add it to the job's `env:` with a safe
+   test value and to `.env.example`).
 
 6. **Second red stops the gate.** Do not attempt a third fix inside this
    skill. Leave the branch and the PR in place, record the failing check
@@ -103,7 +106,7 @@ checklist a person or an assistant follows in any tool.
 ## The shipped report
 
 Written to `docs/missions/<slug>-report.md` in a mission, or appended to
-`docs/demo-notes.md` in a timed build. Every field is required; an empty
+the demo notes in a timed build. Every field is required; an empty
 field says "none", never blank.
 
 ```
@@ -154,11 +157,11 @@ caught by CI, fixed in one commit."
 
 ## Per-stack notes
 
-The gate is the same for every stack. What differs is the check name to
-expect (`Backend`, `Frontend`, `Secret scan` from `templates/ci.yml`)
-and the usual first red: Python formatter drift, Node lockfile mismatch,
-Spring Boot test needing the Postgres service container, Go `gofmt`
-listing a file. All four have one-line fixes in the CI/CD skill.
+The gate is the same for every stack. What differs is the check names
+to expect (whatever the workflow's jobs are called) and the usual first
+red: Python formatter drift (`ruff format .`), Node lockfile mismatch
+(`npm install` once, commit the lockfile), Spring Boot tests needing a
+Postgres service container in the job, Go `gofmt -l` listing a file.
 
 ## Tool notes
 

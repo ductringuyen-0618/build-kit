@@ -1,6 +1,6 @@
 ---
 name: scaffold-service
-description: Minute 0 to 15 of a timed build. Given the stack chosen with playbook/stack-picker.md, create the repo skeleton with a health endpoint that checks the database, one real test, a README with run instructions, .env.example, the stack's Dockerfile and CI job from templates/<stack>/, the App Platform component, a first conventional commit, and a green CI run. Use when starting from an empty directory, when asked to "scaffold", "set up the project", "bootstrap the service", or when nothing runs yet and the clock has started.
+description: Take an empty directory to a first commit with a health endpoint that checks the database, one real test, a README, .env.example, Dockerfile, CI workflow and deploy spec, and a green CI run, in the first fifteen minutes of a timed build.
 ---
 
 # Scaffold a service in fifteen minutes
@@ -43,9 +43,9 @@ starting the feature. Red CI at the start becomes red CI at the end.
    not mention.
 3. **Settings module.** One module reads the environment; nothing else
    does. It exposes the database URL, the port, the allowed origins and
-   the environment name. This is the rule that came from a real bug
-   (two routes reading two different database files), so do it before
-   the first route exists.
+   the environment name. Two modules reading the database path
+   separately is how a service ends up writing one file and reading
+   another, so do this before the first route exists.
 4. **Health endpoint.** Returns 200 with a status field and a checks
    object that names the database. It must actually touch the database
    (`SELECT 1` or the driver's ping) and report `degraded` or 503 when
@@ -70,8 +70,9 @@ starting the feature. Red CI at the start becomes red CI at the end.
    (or `--public` if the interviewer will read it), first commit message
    `chore: scaffold service with health check, tests and ci`. Then
    `gh run watch` or `gh run list --limit 1` until the check is green.
-   Branch protection per `skills/ci-cd-github-actions` section 3 once it
-   is.
+   Then require that check on `main` (repository settings, or
+   `gh api -X PUT repos/OWNER/REPO/branches/main/protection` with the
+   job names as required status checks) once it is.
 10. **Log it.** One line in `docs/TIMELOG.md`: minute, "scaffold green",
     the run URL. One line in `docs/DECISIONS.md`: the stack, the
     alternative, why.
@@ -119,7 +120,7 @@ cp templates/python-fastapi/.env.example backend/.env.example && cp backend/.env
 # src/main.py: app, CORS from settings, GET /health -> {"status": "healthy", "checks": {"database": "ok"}} after SELECT 1
 # tests/test_health.py: client.get("/health") -> 200, body["status"] in {"healthy", "degraded"}
 cd backend && venv/bin/pytest -q            # 1 passed in 0.31s
-venv/bin/uvicorn src.main:app --port 8000 & curl -s localhost:8000/health   # {"status":"healthy",...}
+venv/bin/uvicorn src.main:app --port 8000 & curl -s localhost:8000/health   # {"status":"healthy",...}  (8000 is this example's port)  (8000 is this example's port)
 cp ../templates/python-fastapi/Dockerfile Dockerfile && cd ..
 mkdir -p .github/workflows .do && cp templates/ci.yml .github/workflows/ci.yml && cp templates/do-app.yaml .do/app.yaml
 # edit .do/app.yaml: OWNER/REPO, drop static_sites and its ingress rule
@@ -134,7 +135,8 @@ feature phase starts.
 
 ## Tool notes
 
-Any assistant can follow this. In Claude Code the `superpowers`
-plugin's `test-driven-development` skill matches step 5. In Cursor or
-Codex, attach `templates/<stack>/README.md` to the chat before step 2 so
-the layout is not invented.
+Any assistant can follow this. If the kit's `templates/<stack>/` folder
+is not available, the per-stack table above is enough: write the
+Dockerfile, CI job and deploy spec from the stack's official quickstart
+and keep the same four-file shape. Attach the layout description to the
+chat before step 2 so the layout is not invented.

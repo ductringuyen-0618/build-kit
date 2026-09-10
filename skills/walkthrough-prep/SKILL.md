@@ -1,6 +1,6 @@
 ---
 name: walkthrough-prep
-description: Prepare the interview's second half while building the first. Keeps docs/DECISIONS.md as you go (decision, alternatives, why, what was verified versus trusted from the AI), then in the last ten minutes turns it into a walkthrough script: architecture in two minutes, three trade-offs, what changes at 10x traffic or a spike, what was not verified and how it would be. Scaling answers are grounded in DigitalOcean primitives (App Platform instances and autoscaling, Managed Postgres read-only nodes and connection pools, Managed Valkey, Spaces, Load Balancers) with doc URLs in references/. Use when asked to "prep the walkthrough", "write up the decisions", "what would you change at scale", or at minute 170 of a timed build.
+description: Keep docs/DECISIONS.md as you build (decision, alternatives, why, verified versus trusted) and turn it into the walkthrough script with scaling answers grounded in DigitalOcean primitives in the last ten minutes.
 ---
 
 # Walkthrough prep: the decisions file and the script
@@ -15,7 +15,7 @@ decisions happen, then read aloud.
 
 ## Part 1: `docs/DECISIONS.md`, kept as you go
 
-Created by `scaffold-service`. One entry per decision, appended when
+Created at minute 0 (the `scaffold-service` skill does it). One entry per decision, appended when
 the decision is made. Five lines each. Under time pressure the
 "verified versus trusted" line is the one that must not be skipped.
 
@@ -63,13 +63,13 @@ Worked entries from a bookings service:
 Decisions worth an entry: the stack; the data model (and what was left
 out); where the domain rule lives; SQLite versus Postgres and how the
 settings module hides it; buildpack versus Dockerfile; what was
-scaffolded versus hand-written; every cut at a `timebox` checkpoint;
-every deploy fix.
+scaffolded versus hand-written; every cut at a clock checkpoint; every
+deploy fix.
 
 ## Part 2: the script, minute 170 to 180
 
-Six headings, written into `docs/demo-notes.md` under "Walkthrough".
-Read from it; do not improvise the order.
+Six headings, written into the demo notes (`docs/demo-notes.md`) under
+"Walkthrough". Read from it; do not improvise the order.
 
 ### 1. Architecture in two minutes
 
@@ -77,7 +77,7 @@ One paragraph, in this order: what the service does for whom; the
 request path (browser or client, App Platform ingress, the service, the
 database); the one domain rule and where it lives; what the health
 check covers; where configuration comes from. Then point at the live
-URL and run `smoke.py` against it while talking.
+URL and run the smoke checks against it while talking.
 
 ### 2. Three trade-offs
 
@@ -143,10 +143,10 @@ Each one sentence.
 
 | Minute | Do |
 | --- | --- |
-| 170 | Copy the six headings into `docs/demo-notes.md`. Fill 1 and 4 from this file and the references. |
+| 170 | Copy the six headings into the demo notes. Fill 1 and 4 from this file and the references. |
 | 173 | Fill 2, 3 and 5 from `DECISIONS.md`. Read "What the AI got wrong" once aloud. |
 | 176 | Fill 6 from the timelog's cut lines. Commit `docs: walkthrough notes`. |
-| 178 | Open three tabs: the live URL, the PR or CI run, the repo's README. Run `smoke.py` against the live URL once more and leave the output on screen. |
+| 178 | Open three tabs: the live URL, the PR or CI run, the repo's README. Run the smoke checks against the live URL once more and leave the output on screen. |
 
 ## Per-stack notes for section 4
 

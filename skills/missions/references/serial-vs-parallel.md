@@ -14,10 +14,9 @@ cost real time:
 3. Correctness compounds. A validated milestone 1 is a stable base; an
    unvalidated one is a moving target for everyone downstream.
 
-agent-os runs one build step per workflow instance and flips the
-proposal to `building` so a second builder (the daily COO routine)
-cannot pick the same feature. That flag is the serial rule in file
-form.
+Unattended pipelines enforce this with a flag: the item flips to
+`building` when a worker starts so a second builder cannot pick it up.
+The mission file's status column is that flag.
 
 The exception: two milestones that touch disjoint directories and share
 no interface (a backend endpoint and an unrelated docs page). Even then,

@@ -45,8 +45,10 @@ to a browser, to `curl`, or to a terminal.
    ARIA roles and visible names to describe what you clicked, never
    coordinates. Playwright, a browser MCP, or a human with a mouse are
    all acceptable vehicles; say which you used.
-6. For an API-only service: `curl` or the kit's `smoke-verify` script
-   with the contract turned into checks. Paste the script's output.
+6. For an API-only service: `curl` (or the `smoke-verify` skill's
+   script) with the contract turned into checks: expected status and a
+   substring per request, a create followed by a read. Paste the
+   commands and their output.
 
 ## Report (your final message)
 

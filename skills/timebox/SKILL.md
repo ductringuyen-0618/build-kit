@@ -1,6 +1,6 @@
 ---
 name: timebox
-description: Operator discipline for a three-hour build session. Keeps a running clock file at docs/TIMELOG.md, enforces the playbook's cut rules at minutes 45, 85, 90, 120, 140, 150, 160 and 170, commits every fifteen minutes, and carries the verify-before-trust habit list that DigitalOcean's interview write-up says candidates are judged on. Use at the start of any timed session, whenever someone asks "how much time is left", "should I cut this", or before accepting a green claim from an assistant.
+description: Run a three-hour build against a clock file at docs/TIMELOG.md with cut rules at fixed minutes, a commit every fifteen minutes, and a verify-before-trust checklist for every claim an assistant makes.
 ---
 
 # Timebox: the clock is the runner
@@ -57,8 +57,8 @@ without narration.
 
 ## Cut rules
 
-From `playbook/3-hour-build.md`, with the decision written as a `CHECK`
-line at each minute whether or not anything is cut.
+The decision is written as a `CHECK` line at each minute whether or not
+anything is cut.
 
 | Minute | Ask | If the answer is no |
 | --- | --- | --- |
@@ -66,7 +66,7 @@ line at each minute whether or not anything is cut.
 | 85 | Is everything green locally (full check plus smoke)? | Stop adding. Fix until green. Nothing new after this line until the deploy is proven. |
 | 90 | Is the deploy proven (live URL answering health)? | Skip the second feature. Go to the ship phase now. Come back only if minutes remain after the README. |
 | 120 | Is the App Platform deploy green? | Switch to the container registry path or the generic fallback in the deploy skill. Do not debug the GitHub integration. |
-| 140 | Did `feature-review` (or the user-testing pass) return PASS? | Fix FAIL items that take one commit; cut the rest and list them under "next". |
+| 140 | Did the review and the user-testing pass both return PASS? | Fix FAIL items that take one commit; cut the rest and list them under "next". |
 | 150 | Is the second feature passing? | Revert to the last green commit (`git reset --hard <sha>` on the feature branch, or drop the branch). Write the idea into the demo notes as "next". |
 | 160 | Is the README complete (what, URL, run, test, deploy)? | README before demo notes. Demo notes can be six lines. |
 | 170 | Is the walkthrough script drafted? | Draft it from `docs/DECISIONS.md` and the timelog; three trade-offs and one AI mistake are enough. |
@@ -139,7 +139,6 @@ line below is a `VERIFIED` line in the timelog when done.
 
 ## Tool notes
 
-Any tool. The timelog is a text file; the clock is a watch. In Claude
-Code, if a `loop` or reminder skill is installed, a fifteen-minute
-prompt "commit and log" is worth setting once. Otherwise set a phone
-timer.
+Any tool. The timelog is a text file; the clock is a watch. If the
+assistant offers a recurring reminder, set one for "commit and log"
+every fifteen minutes once; otherwise set a phone timer.

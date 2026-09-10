@@ -1,9 +1,7 @@
 # Three roles: runner, worker, validators
 
-The pattern that agent-os's feature-request workflow and Tri's COO
-routine both implement. The point is not the number of agents; it is
-that the person or process checking the work did not do the work and did
-not watch it being done.
+The point is not the number of agents; it is that the person or process
+checking the work did not do the work and did not watch it being done.
 
 | Role | Sees | Can do | Returns |
 | --- | --- | --- | --- |
@@ -12,11 +10,10 @@ not watch it being done.
 | Scrutiny validator | the goal, the contract, the diff, the CI workflow files | run the exact check commands, read code, make small `style:`/`fix:` commits | `PASS`/`FAIL` first line, exit codes and tails, contract proof table |
 | User-testing validator | the goal, the behavioural assertions, the running app's URL | drive the app from outside (browser, curl, smoke script) | `PASS`/`FAIL`/`BLOCKED`, observed versus expected per assertion, reproductions |
 
-Product review, the third role in the COO prompt, is the user-testing
-validator plus a taste judgement: would a user find this finished. In
-agent-os it is `feature-review`, a read-only diff review against the
-proposal. In a timed build fold it into the user-testing pass: the
-person who opens the URL also asks "would I ship this".
+Product review, a fourth pass some teams run, is the user-testing
+validator plus a taste judgement: would a user find this finished. In a
+timed build fold it into the user-testing pass: the person who opens
+the URL also asks "would I ship this".
 
 ## Why the separation holds up
 
@@ -41,13 +38,12 @@ user-testing briefing with the URL. The commit is the hand-off. The
 rule "do not read the previous pass's reasoning" is what you are
 protecting.
 
-## How the roles map onto the kit's skills
+## Which briefing plays which role
 
-| Role | Skill or briefing |
+| Role | File |
 | --- | --- |
-| Runner | `briefings/runner.md`, `skills/timebox` in a timed build |
-| Worker | `briefings/worker.md`, `skills/feature-build` |
-| Scrutiny validator | `briefings/validator-scrutiny.md`, `skills/feature-validate` |
-| User-testing validator | `briefings/validator-user-testing.md`, `skills/smoke-verify`, `agents/blackbox-qa-validator` |
-| Product review | `skills/feature-review` |
-| Ship | `skills/ship-gate` |
+| Runner | `briefings/runner.md`; in a timed build, the `timebox` skill |
+| Worker | `briefings/worker.md` |
+| Scrutiny validator | `briefings/validator-scrutiny.md` |
+| User-testing validator | `briefings/validator-user-testing.md`, with the `smoke-verify` skill for HTTP checks |
+| Ship | the `ship-gate` skill |

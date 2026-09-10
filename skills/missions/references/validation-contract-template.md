@@ -29,7 +29,7 @@ a line cannot be checked by one of those three, rewrite it until it can.
 - `cd backend && ruff check . && ruff format --check .`
 - `cd backend && pytest tests -q`
 - `cd frontend && npm run verify`
-- `python skills/smoke-verify/scripts/smoke.py --base-url http://127.0.0.1:8000 --checks smoke.json`
+- `python scripts/smoke.py --base-url http://127.0.0.1:PORT --checks smoke.json` (or the curl lines from the `smoke-verify` skill)
 
 ### Existing behaviours that must keep working
 - `GET /health` returns 200 with `"status": "healthy"`.
@@ -46,5 +46,6 @@ a line cannot be checked by one of those three, rewrite it until it can.
 - Negative assertions are the ones workers skip. Write at least two.
 - Put the contract in the issue file under `## Verification` so there is
   one copy, and link to it from the mission file.
-- For `smoke-verify`, every functional and negative line that is an HTTP
-  call becomes one entry in `smoke.json`. Write them in the same pass.
+- Every functional and negative line that is an HTTP call becomes one
+  smoke check (a curl line or a `smoke.json` entry, see the
+  `smoke-verify` skill). Write them in the same pass.

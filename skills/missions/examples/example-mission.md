@@ -27,7 +27,7 @@ Milestone 2: scheduler-status-endpoint. Step: build. Since: 21:40.
 - 20:52 worker re-briefed with scrutiny output verbatim
 - 21:10 hand-off: head 3f2a9c1, +1 commit "test: scheduler stays off when ENVIRONMENT=testing"
 - 21:25 scrutiny PASS, user-testing PASS (re-run)
-- 21:30 ship-gate: PR #14, CI Backend pass, Secret scan pass; report written
+- 21:30 ship gate: PR #14, CI Backend pass, Secret scan pass; report written
 - 21:40 worker briefed for milestone 2
 ```
 
@@ -48,7 +48,7 @@ Milestone 2: scheduler-status-endpoint. Step: build. Since: 21:40.
 - cd backend && ruff check . && ruff format --check .
 - cd backend && mypy . --ignore-missing-imports
 - cd backend && pytest tests -q
-- python skills/smoke-verify/scripts/smoke.py --base-url http://127.0.0.1:8000 --checks backend/smoke.json
+- python scripts/smoke.py --base-url http://127.0.0.1:8000 --checks backend/smoke.json
 ### Existing behaviours
 - GET /health 200 with "status": "healthy"
 - POST /api/ingest/ still works on demand and returns {"ingested": N}

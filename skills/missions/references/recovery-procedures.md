@@ -19,7 +19,7 @@ Signal: the attempts column reads 3 and the last validator still says
    with what the validators saw. That paragraph is more useful than a
    fourth attempt.
 
-The COO routine uses the same rule: at three attempts the proposal is
+Unattended pipelines use the same rule: at three attempts the item is
 marked `blocked` and never touched again without a human editing it
 back.
 
@@ -43,13 +43,13 @@ log, and re-run the same validator with the same briefing.
 
 ## CI is red after local checks passed
 
-Signal: `ship-gate` reports a failing check.
+Signal: the ship step reports a failing check.
 
-`ship-gate` handles the first cycle: read the failing job log, one worker
-run with the log tail as prior failure, push, wait again. A second red
-is an attempt and comes back to the runner. The usual causes are in
-`skills/ci-cd-github-actions` section 5: formatter drift, lockfile
-mismatch, an environment variable present locally and absent in CI.
+The `ship-gate` skill handles the first cycle: read the failing job log,
+one worker run with the log tail as prior failure, push, wait again. A
+second red is an attempt and comes back to the runner. The usual
+causes: formatter drift, lockfile mismatch, an environment variable
+present locally and absent in CI.
 
 ## The session dies mid-milestone
 
@@ -59,7 +59,7 @@ pointing at a milestone with status `building`.
 1. `git log --oneline -20 req/<slug>` shows what the worker committed
    before dying. That is the truth; the hand-off may not exist.
 2. Re-brief the worker with "the branch exists; resume from its log, do
-   not restart from scratch". This is `feature-build` step 1.
+   not restart from scratch". The worker briefing already says this.
 3. Continue the loop from the step named in "Current".
 
 ## The stop rule fires
