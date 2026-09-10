@@ -25,14 +25,13 @@ Encode a learning when any of these happened:
 | how to run or test this app | the README's run section, and the mission file's existing-behaviours list |
 | a contract line everyone should have | `references/validation-contract-template.md` in this skill |
 | a briefing gap for a role | the matching file in `briefings/` |
-| a CI failure pattern | `skills/ci-cd-github-actions` section 5's table |
-| a deploy failure pattern | `skills/deploy-digitalocean-app-platform` |
-| a decision and its alternatives | `docs/DECISIONS.md` (see `skills/walkthrough-prep`) |
+| a CI failure pattern | the CI skill, or the workflow file's header comment |
+| a deploy failure pattern | the deploy skill, or the README's deploy section |
+| a decision and its alternatives | `docs/DECISIONS.md` (see the `walkthrough-prep` skill) |
 
-The author's agent runtime keeps a `learnings.md` beside each skill and
-appends to it after every run. Outside such a runtime the equivalent is a dated line in
-the skill's own file under a `## Learnings` heading; keep it to one
-line per lesson with the date.
+Keep a dated line per lesson in the skill's own file under a
+`## Learnings` heading, or in a `learnings.md` beside it if the file is
+long; one line per lesson with the date.
 
 ## Shape of a learning
 

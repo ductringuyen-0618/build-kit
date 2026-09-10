@@ -1,22 +1,27 @@
 ---
 name: smoke-verify
-description: Run a generic HTTP smoke check (stdlib Python, one file, any stack) against a running service, locally after every feature and against the deployed URL before the demo. Turns a validation contract or an issue's acceptance criteria into a JSON list of GET and POST checks with expected status and substring, prints PASS or FAIL per check and exits nonzero on failure. Use when asked to "smoke test", "verify the deploy", "check the endpoints", "is it up", or before saying a feature is done.
+description: Turn a validation contract into HTTP checks (expected status and substring per GET or POST) and run them against a running service with curl or the bundled stdlib script, locally after every feature and against the deployed URL before the demo.
 ---
 
 # Smoke-verify: prove the running service does what the contract says
 
-`scripts/smoke.py` is about 130 lines of standard-library Python. It
-takes a base URL and a list of checks, sends each request, compares the
-status code and an optional substring, and prints one line per check
-and a summary. Exit 0 when everything passed, 1 when something failed,
-2 when the base URL never answered. No install step, no framework
-knowledge, works against FastAPI, Spring Boot, Fastify, Go, Next.js or
-anything else that speaks HTTP.
+A smoke check is one HTTP request with an expected status code and,
+optionally, a substring the body must contain. A list of them, run in
+order against a base URL, proves the contract from outside the process:
+black-box, no framework knowledge, the same for FastAPI, Spring Boot,
+Fastify, Go, Next.js or anything else that speaks HTTP.
 
-It is the HTTP half of verification; `e2e-verify` is the browser half
-for a UI. Both are black-box, over the wire, one result per check with
-enough detail to act on, and neither assumes a project's routes, scripts
-or ports.
+Two ways to run them. `curl` needs nothing installed and is shown first.
+`scripts/smoke.py` (standard-library Python, under 100 lines) reads the
+same checks from a JSON file, prints one PASS or FAIL line per check and
+a summary, and exits 0 when everything passed, 1 when something failed,
+2 when the base URL never answered. Use the script when there are more
+than three checks or when the output must be pasted into notes; use
+curl for a single question.
+
+Do not adapt a project-specific end-to-end runner from another repo
+under a clock. Its routes, ports and fixtures will not match; the
+generic checks here cost minutes, not an hour.
 
 ## When to run it
 
@@ -31,19 +36,39 @@ or ports.
 A green run against localhost says nothing about the deploy. Run it
 against the public URL and keep that output.
 
-## Usage
+## With curl only
+
+Each check is one command. `-s` silences progress, `-o /dev/null` drops
+the body, `-w "%{http_code}"` prints the status. Read the body when a
+substring matters.
 
 ```
-python skills/smoke-verify/scripts/smoke.py --base-url http://127.0.0.1:8000
-python skills/smoke-verify/scripts/smoke.py --base-url http://127.0.0.1:8000 "GET /health 200 healthy"
-python skills/smoke-verify/scripts/smoke.py --base-url https://my-app-xxxxx.ondigitalocean.app --checks smoke.json
-python skills/smoke-verify/scripts/smoke.py --base-url URL --checks smoke.json --json > docs/smoke-report.json
+BASE=http://127.0.0.1:PORT          # or the deployed URL
+curl -s -o /dev/null -w "health %{http_code}\n" $BASE/health
+curl -s $BASE/health | grep -c healthy                                    # 1 = substring present
+curl -s -o /dev/null -w "create %{http_code}\n" -X POST -H "Content-Type: application/json" -d '{"name":"widget"}' $BASE/api/items/
+curl -s $BASE/api/items/ | grep -c widget                                 # write proven through the read path
+curl -s -o /dev/null -w "empty body %{http_code}\n" -X POST -H "Content-Type: application/json" -d '{}' $BASE/api/items/
+curl -s -o /dev/null -w "missing id %{http_code}\n" $BASE/api/items/does-not-exist
 ```
 
-Copy the script into the session repo as `scripts/smoke.py` (the skill
-installer carries `scripts/` with the skill) so the README can say `python
-scripts/smoke.py --base-url ... --checks smoke.json` and CI can run it
-against a server started in the job.
+Expected: `200`, `1`, `201`, `1`, `422` (or the stack's validation
+status), `404`. Anything else is a finding. Paste the lines and their
+output into the notes; that is the evidence.
+
+## With the script
+
+```
+python scripts/smoke.py --base-url http://127.0.0.1:PORT
+python scripts/smoke.py --base-url http://127.0.0.1:PORT "GET /health 200 healthy"
+python scripts/smoke.py --base-url https://<app>.ondigitalocean.app --checks smoke.json
+python scripts/smoke.py --base-url URL --checks smoke.json --json > docs/smoke-report.json
+```
+
+Copy `scripts/smoke.py` from this skill into the session repo's
+`scripts/` folder so the README can name it and CI can run it against a
+server started in the job. With no checks given it checks `/health`
+for a 200.
 
 Inline check grammar, one quoted string per check:
 
@@ -95,25 +120,6 @@ Use a unique value per run for the create-then-read pair (a timestamp
 in the name) so a stale row from a previous run cannot make the
 read-back pass.
 
-## Without Python: the curl equivalent
-
-The script is a convenience, not a dependency. Each check is one `curl`
-call; the status code and a substring are what you compare.
-
-```
-BASE=http://127.0.0.1:8000
-curl -s -o body.txt -w '%{http_code}\n' "$BASE/health" ; grep -c healthy body.txt
-curl -s -o body.txt -w '%{http_code}\n' -X POST -H 'Content-Type: application/json' -d '{"name":"widget"}' "$BASE/api/items/" ; grep -c '"id"' body.txt
-curl -s -o body.txt -w '%{http_code}\n' "$BASE/api/items/" ; grep -c widget body.txt
-curl -s -o /dev/null -w '%{http_code}\n' -X POST -H 'Content-Type: application/json' -d '{}' "$BASE/api/items/"   # expect 422
-curl -s -o /dev/null -w '%{http_code}\n' "$BASE/api/items/does-not-exist"                                        # expect 404
-```
-
-PowerShell: `(Invoke-WebRequest -Uri "$BASE/health" -SkipHttpErrorCheck).StatusCode`
-and `.Content -match 'healthy'`. Report the result the same way the
-script prints it: one line per check, `PASS` or `FAIL`, expected versus
-observed.
-
 ## Reading the output
 
 ```
@@ -125,7 +131,7 @@ PASS  empty body rejected  status=422  5ms
 FAIL  missing id  status=500  40ms  (expected status 404, got 500)
       body: Internal Server Error
 
-3 passed, 2 failed, 5 total against http://127.0.0.1:8000
+3 passed, 2 failed, 5 total against http://127.0.0.1:PORT
 ```
 
 The first failure is a write that did not land in the read path: check
@@ -139,7 +145,7 @@ anything else.
 
 | Stack | Health path | Typical error status for bad input | Note |
 | --- | --- | --- | --- |
-| Python FastAPI | `/health` | 422 (validation) | routes mount with trailing slashes; check the exact path the router uses |
+| Python FastAPI | `/health` | 422 (validation) | a path with or without a trailing slash may redirect; check the exact path the router mounts |
 | Java Spring Boot | `/actuator/health` | 400 (`@Valid`) | body contains `"status":"UP"`; the database component appears only with `show-details: always` |
 | Node Fastify/Express | `/health` | 400 | no trailing-slash redirect by default; pick one form |
 | Go chi or net/http | `/healthz` | 400 | body `{"status":"ok"}` per the template |
@@ -170,7 +176,7 @@ timestamp.
 
 ## Tool notes
 
-Any assistant can run the script through its shell tool, or the curl
-equivalent above when Python is not on the machine. A subagent briefed with
-`skills/missions/briefings/validator-user-testing.md` should paste the
-script's output into its report rather than describe it.
+Any assistant can run curl or the script through its shell tool. A
+second session briefed as the user-testing validator (see the `missions`
+skill's briefings) should paste the commands and their output into its
+report rather than describe them.

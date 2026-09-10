@@ -53,7 +53,7 @@ reads this file and resumes from "Current".
    - `BLOCKED` from a validator: environment problem, not an attempt; fix
      the environment (start the app, set the variable) and re-run the
      validator.
-6. Ship step (`skills/ship-gate`): push, PR, CI gate, report. A milestone
+6. Ship step (the `ship-gate` skill): push, PR, CI gate, report. A milestone
    is not done until its CI is green or the mission explicitly ships
    without CI and says so in the log.
 7. Write the log line. Update "Current". Only then start the next loop.
@@ -77,12 +77,12 @@ first worker starts. It is one of:
 
 When the stop rule fires: finish the role that is running (do not kill a
 worker mid-commit), commit any work on its branch, update the mission
-file, write the report (`skills/ship-gate` report shape per shipped
+file, write the report (the `ship-gate` report shape per shipped
 milestone, plus a "left undone" list), and hand back. Never extend the
 budget yourself.
 
-In a timed build session the stop rule is the clock in
-`skills/timebox`, and the milestone table has one or two rows.
+In a timed build session the stop rule is the clock (the `timebox`
+skill), and the milestone table has one or two rows.
 
 ## Things the runner never does
 

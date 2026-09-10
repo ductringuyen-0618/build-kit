@@ -8,7 +8,7 @@ everything after it is evidence.
 
 ```
 ## Worker hand-off: <slug>, attempt <n>
-- branch: feature/<slug>
+- branch: req/<slug>
 - head: <sha>
 - commits:
   - <sha> <message>
@@ -19,7 +19,7 @@ everything after it is evidence.
 ```
 
 Required: every line. The runner verifies `head` with `git rev-parse
-feature/<slug>`; a mismatch is a failed hand-off.
+req/<slug>`; a mismatch is a failed hand-off.
 
 ## Scrutiny validator
 
@@ -36,9 +36,10 @@ exit code: <n>
 - <sha> <what>
 ```
 
-The first line must be exactly `PASS` or `FAIL`. The automated workflow reads the
-first line that is exactly one of those two words, so a validator that
-narrates before the verdict is still parsed, but do not rely on it.
+The first line must be exactly `PASS` or `FAIL`. A tolerant parser
+takes the first line that is exactly one of those two words, so a
+validator that narrates before the verdict may still be read, but do
+not rely on it.
 
 ## User-testing validator
 
@@ -56,11 +57,11 @@ url: <url>   started by me: yes/no   vehicle: <browser|curl|smoke.py|playwright>
 <curl command or click sequence>
 ```
 
-## Ship (from `skills/ship-gate`)
+## Ship (from the `ship-gate` skill)
 
 ```
 ## Shipped: <slug>
-- branch: feature/<slug>   pr: <url>   merged: yes/no
+- branch: req/<slug>   pr: <url>   merged: yes/no
 - ci: <check name>: pass | fail | skipped   run: <url>
 - commits: <sha> <message> ...
 - validator findings: <verbatim first lines plus fixes applied>
