@@ -1,9 +1,14 @@
 # AGENTS.md
 
-You are working with Tri Nguyen in a timed build session. Read this file,
-then `playbook/3-hour-build.md`, then the skills the playbook names for
-the current phase. Skills live in `skills/<name>/SKILL.md`. Read a skill in
-full before following it; do not summarise it from its description.
+You are working with Tri Nguyen in a timed build session. This file is the
+entry point for any AI coding assistant (Claude Code, Cursor, Codex,
+Copilot, Windsurf, or a plain chat). Read it, then `playbook/3-hour-build.md`,
+then the skills the playbook names for the current phase. Skills are plain
+Markdown at `skills/<name>/SKILL.md`; read one in full before following it.
+`docs/porting.md` says how to load a skill in each tool.
+
+The stack is not fixed. Pick it once at minute 0 with
+`playbook/stack-picker.md` and carry that choice into every later step.
 
 ## Non-negotiables
 
@@ -16,7 +21,8 @@ These are how Tri works. They are not suggestions.
    `refactor`, `test`, `chore`. Small commits, in order, so the history
    tells the story in the walkthrough.
 3. No secrets in the repo. Config comes from environment variables with a
-   committed `.env.example`. Grep for keys and tokens before every commit.
+   committed `.env.example`. The human pastes tokens; the assistant never
+   sees, echoes or stores one. Grep for keys and tokens before every commit.
 4. The README has run instructions that work from a fresh clone: install,
    run, test, deploy. Write it as you go, not at the end.
 5. There is a deploy target from minute one. In a DigitalOcean session that
@@ -28,23 +34,22 @@ These are how Tri works. They are not suggestions.
    interviewer is watching for.
 7. Ask before you build when the answer changes the design. Use `grill-me`
    for that. Do not ask about things you can read from the repo.
-8. Keep the backend root clean. One-off scripts go in `scripts/`. Do not
+8. Keep the service root clean. One-off scripts go in `scripts/`. Do not
    create progress notes, changelogs or extra markdown files beyond
    README, `docs/designs/`, `docs/issues/` and `docs/demo-notes.md`.
 
 ## Conventions carried over from real projects
 
-- Database location has one source of truth: a settings object that
-  returns the URL, the plain file path, and the SQLAlchemy URL. Every
-  repository and route calls it. A prior bug came from one route resolving
-  its own path and reading a different SQLite file than the one being
-  written.
-- Model calls go through a provider abstraction with graceful fallback
-  between providers. Mock external AI services in tests. Cache embeddings
-  and LLM responses.
-- FastAPI with `redirect_slashes=True` returns 307 redirects that carry no
-  CORS headers. Frontend endpoint constants use the canonical
-  trailing-slash form so the browser never sees the redirect.
+- Configuration has one source of truth: a settings object or config
+  module that every other module reads. Nothing reads the raw environment
+  directly. A prior bug came from one route resolving its own database
+  path and reading a different SQLite file than the one being written.
+- External services (LLM providers, payment, email) sit behind a small
+  interface with a fake used in tests. Design for graceful fallback
+  between providers. Cache expensive calls.
+- Frameworks that redirect on missing or extra trailing slashes send a
+  redirect the browser follows without CORS headers. Frontend endpoint
+  constants use the exact canonical path the router mounts.
 - Prefer ARIA roles and accessible names in browser tests, then
   `data-testid`. Never drive by coordinates.
 - Prove a write by reading it back through the user-facing read path, not
@@ -52,45 +57,43 @@ These are how Tri works. They are not suggestions.
 - Kill only processes you started, by id, never by name.
 - Frontend formatting: single quotes, 80 columns, 2-space tabs, `arrowParens: avoid`, ES5 trailing commas, LF line endings.
 
-## Skill order for a backend service task
+## Load order for a timed build
 
-1. `grill-me` (skills/grill-me): five to eight questions, then
-   `docs/designs/<slug>.md`. Stop asking as soon as goal, non-goals,
-   success criterion, affected surfaces and one failure mode are known.
-2. `write-issue` (skills/write-issue): one issue for the core feature with
-   three to six acceptance criteria. That list is the definition of done.
-3. Scaffold from `templates/backend-fastapi.md`, `templates/ci.yml`,
-   `templates/.env.example`, `templates/Dockerfile`, `templates/.do/app.yaml`.
-   First commit: scaffold, health endpoint, one passing test, CI file.
-4. Build with tests first. If the `superpowers` plugin is installed, use
-   its `test-driven-development` skill; otherwise write the failing test,
-   then the code.
-5. `feature-validate` (skills/feature-validate) shape for every check run:
-   run each command for real, report exit code and tail.
-6. `test-app-e2e` (skills/test-app-e2e) pattern: a stdlib runner that hits
-   the running service over HTTP and tags each failure with a fix area.
-   Adapt the endpoint list; keep the runner shape.
-7. `feature-review` (skills/feature-review): read the diff against the
-   issue's acceptance criteria before calling it done.
-8. Deploy per the playbook's ship phase. Then `verify-techpulse`'s
-   doctor-then-drive-then-evidence loop against the public URL.
+The order is the same for a backend-only service and a full-stack app.
+Steps marked "full-stack" are skipped when there is no UI.
 
-## Skill order for a full-stack task
-
-Same as above with these additions:
-
-- After step 2, scaffold the frontend from `templates/frontend-vite-react.md`
-  and wire the API base URL from an environment variable with a
-  same-origin fallback.
-- If the `designer-skills` pack is installed, `design-brief` is optional
-  and must be capped at ten minutes. Otherwise pick one aesthetic and
-  state it in the README.
-- Before ship, run the `verify-feature` (skills/verify-feature) second
-  gate: an exhaustive click sweep with Playwright that watches for
-  uncaught errors and `console.error`. If Playwright is not available,
-  drive the three main flows by hand and record what you clicked.
-- Serve the built frontend from the backend or as an App Platform static
-  site with an ingress rule, so there is one public URL.
+1. `playbook/stack-picker.md`: choose the stack in one minute. Say it out
+   loud and write it at the top of `docs/demo-notes.md`.
+2. `skills/grill-me`: five to eight questions, then `docs/designs/<slug>.md`.
+   Stop as soon as goal, non-goals, success criterion, affected surfaces
+   and one failure mode are known.
+3. `skills/write-issue`: one issue for the core feature with three to six
+   acceptance criteria. That list is the definition of done.
+4. Scaffold from `templates/<stack>/` (Dockerfile, CI job, `.env.example`,
+   App Platform component) and `skills/ci-cd-github-actions` for the
+   workflow file and branch protection. First commit: scaffold, health
+   endpoint, one passing test, CI green.
+5. Full-stack: scaffold the frontend from `templates/vite-react/` or
+   `templates/nextjs/` and wire the API base URL from an environment
+   variable with a same-origin fallback.
+6. Build with tests first. `skills/feature-build` for branch and commit
+   discipline; if the `superpowers` plugin is installed, its
+   `test-driven-development` skill; otherwise failing test, then code.
+7. `skills/feature-validate` shape for every check run: run each command
+   for real, report exit code and tail, first line `PASS` or `FAIL`.
+8. `skills/test-app-e2e` pattern: a small stdlib runner that hits the
+   running service over HTTP and tags each failure with a fix area. Adapt
+   the endpoint list; keep the runner shape.
+9. `skills/feature-review`: read the diff against the issue's acceptance
+   criteria before calling it done.
+10. Full-stack: `skills/verify-feature` second gate, an exhaustive click
+    sweep that watches for uncaught errors and `console.error`. Without
+    Playwright, drive the three main flows by hand and record what was
+    clicked.
+11. `skills/deploy-digitalocean-app-platform`: spec, create, logs, live
+    URL, then the doctor-then-drive-then-evidence loop from
+    `skills/verify-techpulse` against the public URL.
+12. README, `docs/demo-notes.md`, final commit, CI green, browser tab open.
 
 ## Agents
 
@@ -100,8 +103,16 @@ contract shape) and `blackbox-qa-validator` (test the deployed URL from
 the outside and keep a behaviour spec). `coo` and `librarian` need the
 agent-os daemon and are reference material here.
 
-## How to use the playbook
+## Tool-specific notes
 
-`playbook/3-hour-build.md` is time-boxed. At each phase boundary, state
-the wall-clock time, what artefacts the phase left behind, and what is
-being cut if behind. Cutting scope is expected. Missing the deploy is not.
+- Claude Code: `CLAUDE.md` points here. Skills copied into `.claude/skills/`
+  become invocable by name; `scripts/port.sh all claude <target>` does the copy.
+- Cursor: `.cursor/rules/build-kit.mdc` points here and lists the skills.
+  `scripts/port.sh <skill> cursor <target>` turns a skill into a rule file.
+- Copilot: `.github/copilot-instructions.md` points here.
+- Anything else: paste this file and the relevant `SKILL.md` into context.
+
+Where a skill names a Claude-only tool (`AskUserQuestion`, the `Agent`
+tool, `mcp__agentos__*` syscalls), treat the name as the intent and use
+whatever the current tool offers: ask the human in chat, open a second
+session, read or write the file directly.

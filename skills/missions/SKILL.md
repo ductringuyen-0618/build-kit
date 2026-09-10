@@ -3,6 +3,12 @@ name: missions
 description: Multi-agent execution framework for long-running software goals (hours-to-days, not minutes). Combines delegation, creator-verifier, broadcast, and negotiation into a single orchestrator-worker-validator pattern. Use this skill whenever the user wants Claude to "let it run for hours", "run a mission", "kick off a mission", "ship feature X end-to-end", "build the whole thing while I sleep", or otherwise hand off a multi-milestone software goal that's too big for a single conversational turn. Tightly integrates with grill-me (planning), write-prd (scoping), write-issue (milestone decomposition), and test-app-e2e (validation). Use this skill instead of starting work directly when the user's request involves more than one milestone or feature.
 ---
 
+> **Portability.** "Spawn a subagent with the `Agent` tool" means: start a
+> fresh session or chat with only the briefing as input. In Claude Code
+> that is the `Agent` tool; in Cursor or a plain chat it is a new
+> conversation with the briefing pasted in. See `README.md` in this folder
+> for the bundled files that are not present.
+
 # missions — long-running multi-agent execution
 
 A "mission" is software work that's too big for one conversation but small

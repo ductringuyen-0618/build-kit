@@ -1,0 +1,33 @@
+---
+description: Tri Nguyen's build kit. Entry point, non-negotiables and the skill list for a timed build session.
+globs:
+alwaysApply: true
+---
+
+Read `AGENTS.md` at the repo root first. It has the non-negotiables (tests
+and CI green before done, conventional commits, no secrets, README with run
+instructions, a deploy target from minute one), the load order for a timed
+build, and the conventions. Then follow `playbook/3-hour-build.md`.
+
+Skills are plain Markdown at `skills/<name>/SKILL.md`. Reference one with
+`@skills/<name>/SKILL.md`, or convert it to a rule with
+`sh scripts/port.sh <name> cursor .`. One line each:
+
+- `grill-me`: ask until the design is shared, then write `docs/designs/<slug>.md`.
+- `write-issue`: one scoped ticket with testable acceptance criteria.
+- `write-prd`: PRD from a design context, for work bigger than one ticket.
+- `ci-cd-github-actions`: minimal CI in the first commit, secret scan, branch protection, deploy job.
+- `deploy-digitalocean-app-platform`: `.do/app.yaml`, doctl create and logs, database binding, live URL, fallback, cleanup.
+- `feature-brief`: request to proposal with a validation contract.
+- `feature-build`: implement on a `req/<slug>` branch, small conventional commits, never push.
+- `feature-validate`: run every check for real, first line `PASS` or `FAIL`.
+- `feature-review`: read-only review against the proposal, `PASS` or `FAIL` with named fixes.
+- `test-app-e2e`: black-box HTTP smoke runner with a fix-area tag per failure.
+- `verify-feature`: full lint/type/test loop, then an exhaustive click sweep.
+- `verify-techpulse`: launch, doctor, drive one path, leave evidence (TechPulse-specific example).
+- `missions`: orchestrator, worker and validator pattern for multi-hour runs (reference).
+- `graphify-new-project`: code-only knowledge graph of a fresh repo.
+- `coo-ideate`, `heartbeat`, `ingest`, `lint`, `query`, `daily-digest`: agent-os runtime skills (reference).
+
+Stacks: choose with `playbook/stack-picker.md`; per-stack files live in
+`templates/<stack>/`.

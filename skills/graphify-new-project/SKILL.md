@@ -14,6 +14,13 @@ description: >-
 trigger: /graphify-new
 ---
 
+> **Portability.** `/graphify-new` is the Claude Code trigger; the phrases
+> in the description trigger it in any tool. The PowerShell blocks are the
+> Windows recipe; on macOS or Linux the same two Python scripts run with
+> the graphify interpreter (`uv tool dir`/graphifyy/bin/python). Where the
+> text says "run `/graphify query`", run `graphify query "<question>"` from
+> the project root instead if the slash command is not available.
+
 # graphify-new-project
 
 When the user starts a new project, build a code-only knowledge graph for it so

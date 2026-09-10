@@ -1,6 +1,16 @@
 ---
 description: Runs the project's validation commands on the feature branch and reports PASS or FAIL.
 ---
+
+> **Portability.** This skill was written for the agent-os daemon, where
+> `mcp__agentos__*` are the kernel's syscalls. Outside agent-os, read each
+> call as its intent: `get_context` = read the project's index or README;
+> `read_wiki(page)` = read that Markdown page; `remember(page, content)` =
+> write or append that Markdown page under `docs/` or `wiki/`;
+> `request_approval` / `propose_feature` = write the proposal file and ask
+> the human in chat; `emit_event` / `schedule` = note it for the human. The
+> payload shape, the steps and the hard rules are the part to keep.
+
 # Skill: feature-validate
 
 Trigger: workflow `feature-request`, step `validate` (or `validate-fix`).
