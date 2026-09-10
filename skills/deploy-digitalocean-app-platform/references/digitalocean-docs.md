@@ -89,13 +89,77 @@ backed here is marked as a judgment call in the skill text.
 - GitHub Action `digitalocean/app_action/deploy@v2` (used by the CI/CD
   skill): https://github.com/digitalocean/app_action
 
-## Not verified against docs (judgment calls in the skill)
+## Verified in a second pass (2026-09-09)
 
-- `health_check.initial_delay_seconds` field name and the 30-second
-  Spring Boot recommendation.
-- `ingress.rules` with `component.preserve_path_prefix` and
-  `match.path.prefix` (from the app spec reference structure; example
-  not fetched in full).
-- `doctl compute droplet create` flags and the `docker-20-04` image slug
-  in the fallback section.
-- `doctl registry create`, `doctl registry login`, `doctl registry delete`.
+Items the first pass listed as judgment calls, since checked against the
+pages named:
+
+- `doctl auth init [flags]`: `--context`, `--access-token`/`-t`,
+  `--token-validation-server`; `doctl auth switch --context <name>`:
+  https://docs.digitalocean.com/reference/doctl/reference/auth/init/
+- `doctl account get` (`--format Email,Team,UUID,Status`):
+  https://docs.digitalocean.com/reference/doctl/reference/account/get/
+- `doctl apps create --spec <file>` flags `--wait`, `--upsert`,
+  `--update-sources`, `--project-id`, `--format` (columns `ID`,
+  `Spec.Name`, `DefaultIngress`, `ActiveDeployment.ID`,
+  `InProgressDeployment.ID`, `Created`, `Updated`; there is no `LiveURL`
+  column): https://docs.digitalocean.com/reference/doctl/reference/apps/create/
+- `doctl apps spec validate <spec file>` (`--schema-only`):
+  https://docs.digitalocean.com/reference/doctl/reference/apps/spec/validate/
+- `doctl apps delete <app id> --force`:
+  https://docs.digitalocean.com/reference/doctl/reference/apps/delete/
+- `doctl apps create-deployment <app id>` (`--force-rebuild`, `--wait`):
+  https://docs.digitalocean.com/reference/doctl/reference/apps/create-deployment/
+- `health_check` fields `http_path`, `port` (defaults to `http_port`),
+  `initial_delay_seconds` (default 0), `period_seconds` (10),
+  `timeout_seconds` (1), `success_threshold` (1), `failure_threshold` (9):
+  https://docs.digitalocean.com/products/app-platform/reference/app-spec/
+  and https://docs.digitalocean.com/products/app-platform/how-to/manage-health-checks/
+- `ingress.rules[]` with `match.path.prefix` or `match.path.exact`,
+  `component.name`, `component.preserve_path_prefix` (exclusive with
+  `component.rewrite`), plus `redirect` and `cors` blocks: app spec
+  reference above.
+- `alerts[].rule` values include `DEPLOYMENT_FAILED`, `DEPLOYMENT_LIVE`,
+  `DOMAIN_FAILED`, `DOMAIN_LIVE`, `CPU_UTILIZATION`, `MEM_UTILIZATION`,
+  `RESTART_COUNT`: app spec reference above.
+- `instance_size_slug` current values `apps-s-1vcpu-0.5gb` ($5),
+  `apps-s-1vcpu-1gb-fixed` ($10), `apps-s-1vcpu-1gb` ($12),
+  `apps-s-1vcpu-2gb`, `apps-s-2vcpu-4gb`, and the `apps-d-*` dedicated
+  tiers; `basic-*`/`professional-*` are deprecated:
+  https://docs.digitalocean.com/products/app-platform/details/pricing/
+- `http_port` default 8080; a `PORT` env var is injected from it if none is
+  set. `envs[].scope` `RUN_TIME` | `BUILD_TIME` | `RUN_AND_BUILD_TIME`,
+  `envs[].type` `GENERAL` | `SECRET`; `SECRET` values come back as
+  `EV[...]` after first submit: app spec reference and
+  https://docs.digitalocean.com/products/app-platform/how-to/update-app-spec/
+- Dev databases: PostgreSQL only, versions 15 to 18, one size, no standby,
+  $7.00 per month; connection exposed as `${<db>.DATABASE_URL}`:
+  https://docs.digitalocean.com/products/app-platform/how-to/manage-databases/
+- `doctl registry create <name>` (`--region`, `--subscription-tier`),
+  `doctl registry login` (`--expiry-seconds`, `--read-only`),
+  `doctl registry delete --force`:
+  https://docs.digitalocean.com/reference/doctl/reference/registry/create/
+  https://docs.digitalocean.com/reference/doctl/reference/registry/login/
+  https://docs.digitalocean.com/reference/doctl/reference/registry/delete/
+- `doctl compute droplet create <name> --image <slug> --size <slug>
+  --region <slug> --ssh-keys <ids> --wait`:
+  https://docs.digitalocean.com/reference/doctl/reference/compute/droplet/create/
+- Docker 1-Click image slug `docker-20-04`, currently Ubuntu 22.04 based:
+  https://docs.digitalocean.com/products/marketplace/catalog/docker/
+- Limits: builds time out after 1 hour, deploys after 30 minutes; images
+  over 2 GiB are likely to fail:
+  https://docs.digitalocean.com/products/app-platform/details/limits/
+- do-app-platform-skills README (install by clone and symlink; skills:
+  designer, migration, deployment, networking, postgres,
+  managed-db-services, troubleshooting):
+  https://github.com/digitalocean-labs/do-app-platform-skills
+
+## Still not verified
+
+- The default run command the Node.js and Go buildpacks pick when none is
+  set; the skill sets `run_command` explicitly for both.
+- Whether `${APP_URL}` resolves inside a `static_sites` build-time env.
+  The docs demonstrate `${<component>.PUBLIC_URL}` for that case; the
+  templates use `${APP_URL}` and the same-origin fallback covers a blank.
+- The authoritative region slug list; `doctl apps list-regions --format Slug`
+  prints it.

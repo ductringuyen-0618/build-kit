@@ -37,11 +37,16 @@ four files in.
 | Stack | Scaffold | First test |
 | --- | --- | --- |
 | `python-fastapi` | `python -m venv venv && venv/bin/pip install fastapi "uvicorn[standard]" sqlalchemy pydantic-settings pytest httpx ruff mypy` then `templates/python-fastapi/README.md` layout | `pytest -q` on the health test |
-| `java-spring-boot` | `curl https://start.spring.io/starter.zip -d dependencies=web,data-jpa,postgresql,flyway,actuator,validation -d type=gradle-project -d javaVersion=17 -d bootVersion=3.4.5 -o app.zip && unzip app.zip -d backend` | `./gradlew test --no-daemon` |
+| `java-spring-boot` | `curl https://start.spring.io/starter.zip -d dependencies=web,data-jpa,postgresql,flyway,actuator,validation -d type=gradle-project -d javaVersion=17 -o app.zip && unzip app.zip -d backend` | `./gradlew test --no-daemon` |
 | `node-typescript` | `npm init -y && npm i fastify && npm i -D typescript tsx vitest @types/node eslint prettier && npx tsc --init` | `npx vitest run` on the health test |
 | `go` | `go mod init example.com/app && go get github.com/go-chi/chi/v5` | `go test ./...` on the health handler |
 | `vite-react` | `npm create vite@latest frontend -- --template react-ts && cd frontend && npm i` | `npm run verify` |
 | `nextjs` | `npx create-next-app@latest frontend --ts --eslint --app --src-dir --no-tailwind --import-alias "@/*"` | `npm run lint && npx tsc --noEmit` |
+
+The Spring Initializr command takes its default Boot version (4.x as of
+2026-09-09; 3.x is no longer offered) and Java 17, the oldest it lists
+and what the Dockerfile and CI snippet use. Pin `-d bootVersion=` only
+to a value present in `https://start.spring.io/metadata/client`.
 
 For a pnpm monorepo (backend and frontend as workspaces) use
 `templates/ci-monorepo.yml` and keep each app's own Dockerfile.

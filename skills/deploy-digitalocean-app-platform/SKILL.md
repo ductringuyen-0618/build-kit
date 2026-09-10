@@ -36,9 +36,10 @@ Do not spend the last ten minutes debugging the platform.
 ## 1. Prerequisites
 
 - `doctl` installed (`doctl version`).
-- Authenticated. The human runs `doctl auth init` and pastes the token
-  themselves. The assistant never asks for, reads, echoes or stores the
-  token. If the assistant is driving a terminal, hand the keyboard over
+- Authenticated. The human runs `doctl auth init` (or
+  `doctl auth init --context interview` to keep it apart from an existing
+  login) and pastes the token themselves. The assistant never asks for,
+  reads, echoes or stores the token. If the assistant is driving a terminal, hand the keyboard over
   for that one command.
 - Confirm: `doctl account get` prints the account email and status.
 - For GitHub-sourced builds, the DigitalOcean GitHub app must be
@@ -93,8 +94,12 @@ run command for the stack. Field notes:
   `backend/` and `frontend/`, each component sets its own.
 - `http_port` must match the port the process listens on.
 - `health_check.http_path` is what the platform polls; a component with a
-  failing health check never goes live. Set `initial_delay_seconds` to
-  cover startup (Spring Boot needs 30 or more).
+  failing health check never goes live. Defaults: `initial_delay_seconds`
+  0, `period_seconds` 10, `timeout_seconds` 1, `failure_threshold` 9, so a
+  slow start gets about 90 seconds before the deploy is marked failed.
+  Set `initial_delay_seconds` to cover startup (Spring Boot needs 30 or
+  more) and raise `timeout_seconds` if the health handler touches the
+  database.
 - Environment variables: `scope: RUN_TIME`, `BUILD_TIME`, or
   `RUN_AND_BUILD_TIME`. Mark secrets `type: SECRET` with an empty value in
   the committed file and set the value in the control panel, or paste the
@@ -109,7 +114,8 @@ run command for the stack. Field notes:
 ### 3a. Create and watch
 
 ```
-doctl apps create --spec .do/app.yaml
+doctl apps spec validate .do/app.yaml
+doctl apps create --spec .do/app.yaml --format ID,DefaultIngress
 doctl apps list
 doctl apps get <app-id> --format ID,Spec.Name,DefaultIngress,ActiveDeployment.ID
 doctl apps logs <app-id> --type build --follow
@@ -117,7 +123,10 @@ doctl apps logs <app-id> --type deploy --follow
 doctl apps logs <app-id> --type run --follow
 ```
 
-`DefaultIngress` in `doctl apps get` is the live URL. `--type` defaults
+`DefaultIngress` in `doctl apps get` is the live URL
+(`doctl apps get <app-id> --format DefaultIngress --no-header` prints only
+that). `--wait` on `create` or `update` blocks until the deployment
+finishes; skip it when you want to watch the logs. `--type` defaults
 to `run`. A component name can be passed after the app id to narrow logs
 to one component (`doctl apps logs <app-id> api --type build`).
 
@@ -136,9 +145,10 @@ databases:
     production: false
 ```
 
-`production: false` is a dev database: provisioned with the app, cheapest,
-fine for a prototype. `production: true` with `cluster_name` attaches an
-existing managed cluster. The service reads the connection string from
+`production: false` is a dev database: provisioned with the app, cheapest
+(one size, $7 a month, no standby), PostgreSQL only (versions 15 to 18,
+`version: "16"` to pin), fine for a prototype. `production: true` with
+`cluster_name` attaches an existing managed cluster. The service reads the connection string from
 its env:
 
 ```yaml
@@ -267,7 +277,8 @@ Same Dockerfile, different host, so the demo still happens:
 - Locally: `docker build -t app backend && docker run --rm -p 8000:8000 --env-file backend/.env app`,
   then demo on `http://localhost:8000`. Say plainly that the App Platform
   deploy is in progress or failed, and what the failure was.
-- A Droplet: `doctl compute droplet create demo --image docker-20-04 --size s-1vcpu-1gb --region nyc3 --ssh-keys <key-id>`,
+- A Droplet: `doctl compute droplet create demo --image docker-20-04 --size s-1vcpu-1gb --region nyc3 --ssh-keys <key-id> --wait`
+  (the Docker 1-Click image; the slug still says 20-04 but it runs Ubuntu 22.04),
   then `ssh root@<ip>`, `docker compose up -d` with the same image. A
   public IP on port 80 counts as deployed on DigitalOcean.
 - Any other host that takes a Dockerfile.

@@ -46,12 +46,12 @@ snippet from `templates/<stack>/ci-job.yml`. Shape that matters:
 
 | Stack | Setup | Lint | Typecheck | Test | Build |
 | --- | --- | --- | --- | --- | --- |
-| Python FastAPI | `actions/setup-python@v5` 3.12, `pip install -r requirements.txt ruff mypy pytest` | `ruff check . && ruff format --check .` | `mypy . --ignore-missing-imports` | `pytest tests -q` | `python -c "from src.main import app"` |
-| Java Spring Boot | `actions/setup-java@v4` temurin 17 `cache: gradle`; `chmod +x gradlew` | `./gradlew check -x test --no-daemon` (spotless/checkstyle if configured) | (compiler) | `./gradlew test --no-daemon`, Postgres as a `services:` container when tests need it | `./gradlew bootJar --no-daemon` |
-| Node/TypeScript | `actions/setup-node@v4` 22 `cache: npm`; `npm ci` | `npm run lint` | `npx tsc --noEmit` | `npm test` | `npm run build` |
-| pnpm monorepo | `pnpm/action-setup@v4` then `actions/setup-node@v4` `cache: pnpm`; `pnpm install --frozen-lockfile` | `pnpm lint` | `pnpm -r run typecheck` | `pnpm test` | `pnpm build` |
-| Go | `actions/setup-go@v5` with `go-version-file: go.mod` | `go vet ./...` (add `golangci-lint` only if already configured) | (compiler) | `go test ./...` | `go build ./...` |
-| Vite/React | `actions/setup-node@v4` 22 `cache: npm`; `npm ci` | `npm run lint` | `npm run typecheck` | Playwright only if specs exist | `npm run build` then assert the output dir exists |
+| Python FastAPI | `actions/setup-python@v7` 3.12, `pip install -r requirements.txt ruff mypy pytest` | `ruff check . && ruff format --check .` | `mypy . --ignore-missing-imports` | `pytest tests -q` | `python -c "from src.main import app"` |
+| Java Spring Boot | `actions/setup-java@v6` temurin 17 `cache: gradle`; `chmod +x gradlew` | `./gradlew check -x test --no-daemon` (spotless/checkstyle if configured) | (compiler) | `./gradlew test --no-daemon`, Postgres as a `services:` container when tests need it | `./gradlew bootJar --no-daemon` |
+| Node/TypeScript | `actions/setup-node@v7` 22 `cache: npm`; `npm ci` | `npm run lint` | `npx tsc --noEmit` | `npm test` | `npm run build` |
+| pnpm monorepo | `pnpm/action-setup@v6` then `actions/setup-node@v7` `cache: pnpm`; `pnpm install --frozen-lockfile` | `pnpm lint` | `pnpm -r run typecheck` | `pnpm test` | `pnpm build` |
+| Go | `actions/setup-go@v7` with `go-version-file: go.mod` | `go vet ./...` (add `golangci-lint` only if already configured) | (compiler) | `go test ./...` | `go build ./...` |
+| Vite/React | `actions/setup-node@v7` 22 `cache: npm`; `npm ci` | `npm run lint` | `npm run typecheck` | Playwright only if specs exist | `npm run build` then assert the output dir exists |
 | Next.js | same as Node | `npm run lint` | `npx tsc --noEmit` | `npm test` if present | `npm run build` |
 
 Environment for tests: `ENVIRONMENT=testing` (disables schedulers) and a
@@ -64,10 +64,10 @@ provider fake is what runs here.
   secrets:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      - uses: gitleaks/gitleaks-action@v2
+      - uses: gitleaks/gitleaks-action@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
@@ -77,7 +77,9 @@ first commit because the first commit is where a pasted token is most
 likely: `.env` files, deploy specs, notebook outputs. Catching it on push
 number one costs nothing; rotating a leaked token during the interview
 costs ten minutes. Add `.gitleaks.toml` only to allow-list a known false
-positive, never to silence a real hit.
+positive, never to silence a real hit. Repos owned by an organisation
+account also need `GITLEAKS_LICENSE` (a free key) in `env`; personal
+repos need only `GITHUB_TOKEN`.
 
 ## 3. Branch protection in one command
 
@@ -95,8 +97,11 @@ gh api -X PUT repos/OWNER/REPO/branches/main/protection \
   "restrictions": null
 }
 EOF
-gh repo edit OWNER/REPO --delete-branch-on-merge
+gh api -X PATCH repos/OWNER/REPO -F delete_branch_on_merge=true
 ```
+
+(`gh repo edit OWNER/REPO --delete-branch-on-merge` does the same
+through the CLI; `-F` sends a JSON boolean, `-f` would send a string.)
 
 `strict: true` means the branch must be up to date with main before
 merging. `enforce_admins: false` leaves an escape hatch for the owner in a
@@ -104,13 +109,34 @@ timed session; say so in the demo. `required_pull_request_reviews: null`
 because a solo build has no second reviewer. Check with
 `gh api repos/OWNER/REPO/branches/main/protection --jq .required_status_checks.contexts`.
 
+The newer rulesets API needs no nullable placeholders and targets the
+default branch by name:
+
+```
+gh api -X POST repos/OWNER/REPO/rulesets --input - <<'EOF'
+{
+  "name": "main-ci", "target": "branch", "enforcement": "active",
+  "conditions": { "ref_name": { "include": ["~DEFAULT_BRANCH"], "exclude": [] } },
+  "rules": [
+    { "type": "required_status_checks",
+      "parameters": { "strict_required_status_checks_policy": true,
+                      "required_status_checks": [ { "context": "Backend" }, { "context": "Secret scan" } ] } },
+    { "type": "deletion" }, { "type": "non_fast_forward" }
+  ]
+}
+EOF
+```
+
+Either one is fine; use the one you can type from memory.
+
 ## 4. CD: deploy only from main, only after CI
 
 `templates/deploy-do.yml` deploys to DigitalOcean App Platform with the
 official action. It runs on `push` to `main` and uses
 `workflow_run` gating or `needs:` inside the same workflow so it never
 runs on a red build. The human creates the `DIGITALOCEAN_ACCESS_TOKEN`
-repository secret themselves (Settings, Secrets and variables, Actions);
+repository secret themselves (Settings, Secrets and variables, Actions,
+or `gh secret set DIGITALOCEAN_ACCESS_TOKEN`, which prompts for the value);
 the assistant never handles the token value.
 
 ```yaml
@@ -133,13 +159,13 @@ Generic alternative, an image to GHCR that any host can pull:
       contents: read
       packages: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: docker/login-action@v3
+      - uses: actions/checkout@v7
+      - uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - uses: docker/build-push-action@v6
+      - uses: docker/build-push-action@v7
         with:
           context: backend
           push: true

@@ -8,7 +8,7 @@ interview machine. Versions are what was installed on 2026-09-09.
 
 | Skill set | Source | Install | What it does |
 | --- | --- | --- | --- |
-| DigitalOcean App Platform skills | github.com/digitalocean-labs/do-app-platform-skills | `git clone https://github.com/digitalocean-labs/do-app-platform-skills.git` then symlink it: `ln -s "$PWD/do-app-platform-skills" ~/.claude/skills/do-app-platform-skills` (or `~/.cursor/skills/`, `~/.codex/skills/`) | Twelve skills for app-spec generation, managed Postgres defaults, VPC, GitHub Actions deploys, secrets via bindable variables, Heroku migration, troubleshooting. Published by DigitalOcean 2026-03-16. Not installed locally yet; install it first. |
+| DigitalOcean App Platform skills | github.com/digitalocean-labs/do-app-platform-skills | `git clone https://github.com/digitalocean-labs/do-app-platform-skills.git` then symlink it: `ln -s "$PWD/do-app-platform-skills" ~/.claude/skills/do-app-platform-skills` (or `~/.cursor/skills/`, `~/.codex/skills/`) | Seven skills (designer, deployment, networking, postgres, managed-db-services, migration, troubleshooting) covering app-spec generation, managed Postgres defaults, VPC, GitHub Actions deploys, secrets via bindable variables, Heroku migration and troubleshooting. Published by DigitalOcean 2026-03-16. Not installed locally yet; install it first. |
 
 ## Claude Code plugins (marketplace `claude-plugins-official`, github.com/anthropics/claude-plugins-official)
 
