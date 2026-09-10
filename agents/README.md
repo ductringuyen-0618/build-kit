@@ -1,17 +1,69 @@
 # Agents
 
-Each folder holds one `AGENT.md`: a persona, a permission shape, and hard
-rules. Three come from agent-os, where the daemon spawns them as headless
-Claude Code sessions with only the tools listed. One is a user-level Claude
-Code subagent definition.
+Role briefs for splitting a build across several agents. Each brief is
+plain Markdown with no tool-specific syntax, so it works in Claude Code,
+Cursor, Codex, Copilot, or a second chat window pasted by hand.
 
-| Agent | Origin | How it is meant to be used |
+## The pattern
+
+- **One coordinator.** It holds the plan and the end goal, assigns roles in
+  order, and decides what happens next. It never does the work itself.
+- **Roles with a single responsibility.** A role either builds, checks, tests,
+  or reviews. It never does two of those, and it never redefines its own
+  scope.
+- **Fresh context per role.** Each role receives only its brief plus the task
+  it is given. In particular, a validator must not see the builder's
+  reasoning or report, only the resulting code. This is what makes the check
+  independent.
+- **Structured report back.** Every role ends with the report format its brief
+  specifies. The coordinator reads that report, not the transcript.
+- **Nothing is done until CI is green.** A builder saying "done" is a claim.
+  Passing checks, run by someone who did not write the code, is evidence.
+
+## The roles
+
+| Role | File | One line |
 | --- | --- | --- |
-| `ops` | agent-os | Runs the `feature-brief`, `feature-build`, `feature-validate` and `feature-review` steps. In a timed build, brief a subagent with the matching skill and this persona: validate runs every check for real and answers `PASS`/`FAIL` first; review is read-only and never passes code it did not read. The daemon-only parts (`heartbeat`, `daily-digest`, `mcp__agentos__*`) do not apply outside agent-os. |
-| `blackbox-qa-validator` | user-level `~/.claude/agents/` | A subagent that tests a running app from the outside, never reads source, and keeps `<app>-qa-behaviors.md` as a regression spec. Point it at the deployed URL in the last phase of the playbook. Drop the file into `.claude/agents/` to make it available as a subagent type. The Claude Code harness appends its own memory section at runtime, so that boilerplate is not included here. |
-| `coo` | agent-os | Reads a repo and proposes exactly one well-argued feature, then waits for a human decision. Useful as the "what next" heuristic at minute 90 of the playbook. The `propose_feature` syscall it calls exists only in agent-os. |
-| `librarian` | agent-os | Owns a wiki: ingest, query, lint. Reference material for how to constrain an agent to a single write path (`remember`) and treat raw input as untrusted. Not used in a timed build. |
+| Coordinator | `coordinator.md` | Keeps the plan, assigns roles in order, counts attempts, stops at 3. |
+| Builder | `builder.md` | Implements one validation contract on a branch in small commits. |
+| Scrutiny validator | `scrutiny-validator.md` | Runs exactly what CI runs on the diff, reports PASS or FAIL with output. |
+| User tester | `user-tester.md` | Uses the running product like a user, black-box, pass or fail with reasons. |
+| Product reviewer | `product-reviewer.md` | Judges finish quality: states, copy, consistency, accessibility. |
 
-Common shape across all four: state the persona in a few sentences, list
-allowed tools explicitly, put hard rules last, and make the machine-read
-part of the reply (first line `PASS`/`FAIL`, one-line confirmation) exact.
+Order for one unit of work: coordinator writes the task, builder builds,
+scrutiny validator checks, user tester exercises (if the change is
+user-facing), product reviewer polishes (last pass before shipping). Any
+FAIL goes back to the builder with the report attached.
+
+## How to hand a role to an agent
+
+The hand-off is always the same three parts: the role brief verbatim, the
+task (goal, validation contract, branch or commit to start from), and the
+sentence "Reply using the report format in the brief."
+
+- **Claude Code.** Use the Agent tool with the brief and task as the prompt.
+  To make a role a reusable subagent type, copy its file into
+  `.claude/agents/<role>.md` and add a frontmatter block with `name` and
+  `description`. Give validators and reviewers a fresh agent, never a fork,
+  so they do not inherit the builder's context.
+- **Cursor.** Start a background agent (or a new chat) and paste brief plus
+  task as the first message. Point it at the branch the builder used.
+- **Codex.** Start a new thread per role with the same first message. Use a
+  separate thread for each validator so nothing leaks from the build thread.
+- **Copilot.** Open a new chat session per role, paste brief plus task, and
+  attach the changed files or the diff rather than the whole conversation.
+- **Any other tool, or by hand.** Open a second chat, paste brief plus task.
+  Copy the report back into the coordinator's chat. Nothing here depends on
+  a tool feature.
+
+If the tool cannot run commands, the scrutiny validator and user tester
+roles cannot be filled by it. Run the commands yourself and paste the
+output into the role's report format instead of skipping the step.
+
+## Roles that live upstream
+
+Earlier versions of this folder carried three runtime agents (`coo`,
+`librarian`, `ops`) from the agent-os daemon. They need a scheduler, a
+wiki, and a set of syscalls that only exist in that runtime, so they do
+not belong in a timed build. They now live at
+<https://github.com/ductringuyen-0618/agent-os>.
