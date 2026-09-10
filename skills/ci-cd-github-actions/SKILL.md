@@ -1,90 +1,114 @@
 ---
 name: ci-cd-github-actions
-description: Stand up GitHub Actions CI/CD in the first 20 minutes of a timed build and keep it green. Use when scaffolding a new repo, when asked for CI, tests-in-CI, a deploy pipeline, branch protection, secret scanning, or when a workflow run is red and needs reading fast. Covers a minimal ci.yml (lint, typecheck, test, build) per stack, a pnpm monorepo variant, gitleaks, required status checks via gh api, a main-only deploy job to DigitalOcean App Platform or a GHCR image push, and the three failures that hit timed builds most.
+description: Set up GitHub Actions for a new repo of any stack, from a minimal CI workflow in the first commit through secret scanning, branch protection, a main-only deploy job, and reading a red run fast.
 ---
 
 # CI/CD with GitHub Actions
 
-Goal: from the first commit, every push shows a green check that ran
-lint, typecheck, tests and build for real; main is protected by that
-check; a deploy job runs only on main after CI passes. Distilled from the
-workflows in TechPulse (Python plus Vite), agent-os (pnpm monorepo with
-gitleaks and a tagged release), salon-hub (Spring Boot with a Postgres
-service container, Docker image publish) and portfolio-website (Vite to
-GitHub Pages). Action names and inputs were checked against the docs in
+## Purpose
+
+From the first commit, every push shows a green check that really ran
+lint, typecheck, tests and build. The default branch cannot be merged
+into while that check is red. A deploy job runs only on the default
+branch and only after CI passed. Nothing here depends on a particular
+project; every command is either stock GitHub tooling or listed per
+stack in the table below. Action versions were checked on the date in
 `references/github-docs.md`.
 
-## 1. Minimal `ci.yml` in the first commit
+## When to use
 
-Copy `templates/ci.yml` (backend plus frontend) or
-`templates/ci-monorepo.yml` (pnpm workspaces) to
-`.github/workflows/ci.yml`, then replace the backend job's steps with the
-snippet from `templates/<stack>/ci-job.yml`. Shape that matters:
+- Scaffolding a new repository (before the first push).
+- Asked for CI, tests in CI, a deploy pipeline, branch protection, or
+  secret scanning.
+- A workflow run is red and has to be read and fixed quickly.
 
-- Triggers: `push` to `main` and the branch prefixes in use
-  (`feature/**`, `bugfix/**`, `hotfix/**`, `refactor/**`, `docs/**`),
-  `pull_request` to `main`, and `workflow_dispatch`.
-- `concurrency: group: ${{ github.workflow }}-${{ github.ref }}` with
-  `cancel-in-progress: true`, so a rapid second push cancels the first
-  run instead of queueing behind it.
-- `permissions: contents: read` at the top; widen per job only when a
-  job writes (packages, pages).
-- One job per component. When backend and frontend live in one repo,
-  either separate jobs that skip cleanly if their folder is absent (the
-  template's `test -f` guard), or `dorny/paths-filter` to run only what
-  changed. Separate jobs give separate status checks, which is what
-  branch protection wants.
-- Caching through the setup actions: `actions/setup-python` with
-  `cache: pip` and `cache-dependency-path`; `actions/setup-node` with
-  `cache: npm` or `cache: pnpm` (after `pnpm/action-setup`);
-  `actions/setup-java` with `cache: gradle`; `actions/setup-go` caches
-  modules by default.
-- Order inside a job: install, lint, typecheck, test, build. Fail fast;
-  do not `|| echo` past a failure. A step that cannot fail is not a check.
+## Inputs
 
-### Per-stack steps
+- Repository `OWNER/REPO`, its default branch (assumed `main` below), and
+  a `gh` CLI logged in with admin rights on the repo (`gh auth status`).
+- The stack of each component and the folder it lives in (for example
+  `backend/` Python plus `frontend/` Node, or a single root package).
+- The package manager and lockfile in use (`requirements.txt`,
+  `package-lock.json`, `pnpm-lock.yaml`, `gradlew`, `go.mod`).
+- The deploy target, if any: DigitalOcean App Platform (needs a
+  `.do/app.yaml`, see `templates/do-app.yaml` and the
+  `deploy-digitalocean-app-platform` skill) or a container image on GHCR.
+- Secrets are created by a human in the repo settings. Never read, print
+  or paste a token value.
+
+## Steps
+
+### 1. Minimal `ci.yml` in the first commit
+
+Copy `templates/ci.yml` to `.github/workflows/ci.yml` (pnpm workspaces:
+`templates/ci-monorepo.yml`). Edit every line marked `# CHANGE:`. Delete
+the job for a component the repo does not have. Where
+`templates/<stack>/ci-job.yml` exists for the stack, its job can replace
+the template's backend or frontend job wholesale. The shape that matters:
+
+- Triggers: `push` to the default branch, `pull_request` to it, and
+  `workflow_dispatch`. Add branch patterns to `push` only if pushes
+  without a PR must also be checked.
+- `concurrency` keyed on workflow and ref with `cancel-in-progress: true`,
+  so a second push cancels the run still going instead of queueing.
+- `permissions: contents: read` at the top; widen per job only when a job
+  writes (packages, pages).
+- One job per component, each with `defaults.run.working-directory`.
+  Separate jobs give separate status checks, which branch protection
+  needs.
+- Step order in a job: install, lint, typecheck, test, build. Never
+  `|| true` or `|| echo` past a failure. A step that cannot fail is not a
+  check.
+- Test environment: put every variable the app's config reads at import
+  or startup into the job's `env:` with throwaway values, and keep
+  `.env.example` in sync. CI never talks to a real external service.
+
+Commit the workflow together with the scaffold, a health endpoint and one
+passing test, so the first run is green.
+
+### 2. Caching
+
+Cache through the setup action, not a hand-written `actions/cache` step:
+
+| Setup action | Input | Note |
+| --- | --- | --- |
+| `actions/setup-python@v7` | `cache: pip`, `cache-dependency-path: <dir>/requirements.txt` | also `pipenv`, `poetry` |
+| `actions/setup-node@v7` | `cache: npm` (or `yarn`), `cache-dependency-path: <dir>/package-lock.json` | path is from the repo root even with a working directory set |
+| `pnpm/action-setup@v6` then `actions/setup-node@v7` | `cache: pnpm` | pnpm must be installed before setup-node |
+| `actions/setup-java@v6` | `cache: gradle` or `cache: maven` | |
+| `actions/setup-go@v7` | `go-version-file: <dir>/go.mod` | module cache is on by default |
+
+### 3. Per-stack lint, typecheck, test, build
 
 | Stack | Setup | Lint | Typecheck | Test | Build |
 | --- | --- | --- | --- | --- | --- |
-| Python FastAPI | `actions/setup-python@v7` 3.12, `pip install -r requirements.txt ruff mypy pytest` | `ruff check . && ruff format --check .` | `mypy . --ignore-missing-imports` | `pytest tests -q` | `python -c "from src.main import app"` |
-| Java Spring Boot | `actions/setup-java@v6` temurin 17 `cache: gradle`; `chmod +x gradlew` | `./gradlew check -x test --no-daemon` (spotless/checkstyle if configured) | (compiler) | `./gradlew test --no-daemon`, Postgres as a `services:` container when tests need it | `./gradlew bootJar --no-daemon` |
-| Node/TypeScript | `actions/setup-node@v7` 22 `cache: npm`; `npm ci` | `npm run lint` | `npx tsc --noEmit` | `npm test` | `npm run build` |
-| pnpm monorepo | `pnpm/action-setup@v6` then `actions/setup-node@v7` `cache: pnpm`; `pnpm install --frozen-lockfile` | `pnpm lint` | `pnpm -r run typecheck` | `pnpm test` | `pnpm build` |
-| Go | `actions/setup-go@v7` with `go-version-file: go.mod` | `go vet ./...` (add `golangci-lint` only if already configured) | (compiler) | `go test ./...` | `go build ./...` |
-| Vite/React | `actions/setup-node@v7` 22 `cache: npm`; `npm ci` | `npm run lint` | `npm run typecheck` | Playwright only if specs exist | `npm run build` then assert the output dir exists |
-| Next.js | same as Node | `npm run lint` | `npx tsc --noEmit` | `npm test` if present | `npm run build` |
+| Python | `setup-python` 3.12; `pip install -r requirements.txt ruff mypy pytest` | `ruff check . && ruff format --check .` | `mypy . --ignore-missing-imports` | `pytest -q` | `python -c "import <app module>"` |
+| Node/TypeScript | `setup-node` 22; `npm ci` | `npm run lint` | `npx tsc --noEmit` | `npm test` | `npm run build` |
+| pnpm monorepo | `pnpm/action-setup` then `setup-node`; `pnpm install --frozen-lockfile` | `pnpm lint` | `pnpm -r --if-present run typecheck` | `pnpm test` | `pnpm build` |
+| Vite/React | `setup-node` 22; `npm ci` | `npm run lint` | `npx tsc --noEmit` | e2e only if specs exist | `npm run build && test -d dist` |
+| Next.js | `setup-node` 22; `npm ci` | `npm run lint` | `npx tsc --noEmit` | `npm test` if present | `npm run build` |
+| Java Spring Boot | `setup-java` temurin 17, `cache: gradle`; `chmod +x gradlew` | `./gradlew check -x test --no-daemon` | compiler | `./gradlew test --no-daemon` (Postgres as a `services:` container if needed) | `./gradlew bootJar --no-daemon` |
+| Go | `setup-go` with `go-version-file` | `gofmt -l .` must print nothing; `go vet ./...` | compiler | `go test ./...` | `go build ./...` |
 
-Environment for tests: `ENVIRONMENT=testing` (disables schedulers) and a
-throwaway database URL. Never point CI at a real external service; the
-provider fake is what runs here.
+Script names (`lint`, `test`, `build`, `typecheck`) must exist in the
+package manifest; add them there rather than inventing new ones in CI.
 
-## 2. Secret scanning from commit one
+### 4. Secret scanning
 
-```yaml
-  secrets:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-      - uses: gitleaks/gitleaks-action@v3
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-```
+The `secrets` job in both CI templates runs `gitleaks/gitleaks-action@v3`
+on a `fetch-depth: 0` checkout, so it scans history rather than the tip.
+It belongs in the first commit because that commit is where a pasted
+token is most likely (`.env` files, deploy specs, notebook outputs).
+Personal repos need only `GITHUB_TOKEN`; organisation-owned repos also
+need a free `GITLEAKS_LICENSE` secret. Add a `.gitleaks.toml` only to
+allow-list a confirmed false positive, never to silence a real hit. If a
+real secret is found, rotate it; deleting the commit is not enough.
 
-`fetch-depth: 0` so it scans history, not just the tip. It belongs in the
-first commit because the first commit is where a pasted token is most
-likely: `.env` files, deploy specs, notebook outputs. Catching it on push
-number one costs nothing; rotating a leaked token during the interview
-costs ten minutes. Add `.gitleaks.toml` only to allow-list a known false
-positive, never to silence a real hit. Repos owned by an organisation
-account also need `GITLEAKS_LICENSE` (a free key) in `env`; personal
-repos need only `GITHUB_TOKEN`.
+### 5. Branch protection and delete-branch-on-merge
 
-## 3. Branch protection in one command
-
-After the first green run, require the check names (the jobs' `name:`
-values, or the job ids if no name is set) on `main`:
+After the first green run, require the check names (each job's `name:`,
+or its id if unnamed) on the default branch. Replace `OWNER/REPO` and the
+context strings:
 
 ```
 gh api -X PUT repos/OWNER/REPO/branches/main/protection \
@@ -97,88 +121,39 @@ gh api -X PUT repos/OWNER/REPO/branches/main/protection \
   "restrictions": null
 }
 EOF
-gh api -X PATCH repos/OWNER/REPO -F delete_branch_on_merge=true
+gh repo edit OWNER/REPO --delete-branch-on-merge
+gh api repos/OWNER/REPO/branches/main/protection --jq .required_status_checks.contexts
 ```
 
-(`gh repo edit OWNER/REPO --delete-branch-on-merge` does the same
-through the CLI; `-F` sends a JSON boolean, `-f` would send a string.)
+The four keys in the body are all required by the endpoint; the two
+`null`s mean "not configured". `strict: true` forces a branch to be up to
+date with the default branch before merging. `enforce_admins: false`
+leaves the repository owner an escape hatch for a solo build; state that
+choice when presenting. The last command verifies. For the newer rulesets
+API and the merge-queue variant see `references/branch-protection.md`.
 
-`strict: true` means the branch must be up to date with main before
-merging. `enforce_admins: false` leaves an escape hatch for the owner in a
-timed session; say so in the demo. `required_pull_request_reviews: null`
-because a solo build has no second reviewer. Check with
-`gh api repos/OWNER/REPO/branches/main/protection --jq .required_status_checks.contexts`.
+### 6. Deploy job on the default branch
 
-The newer rulesets API needs no nullable placeholders and targets the
-default branch by name:
+Copy `templates/deploy-do.yml` to `.github/workflows/deploy.yml`, keep one
+of its two variants and delete the other:
 
-```
-gh api -X POST repos/OWNER/REPO/rulesets --input - <<'EOF'
-{
-  "name": "main-ci", "target": "branch", "enforcement": "active",
-  "conditions": { "ref_name": { "include": ["~DEFAULT_BRANCH"], "exclude": [] } },
-  "rules": [
-    { "type": "required_status_checks",
-      "parameters": { "strict_required_status_checks_policy": true,
-                      "required_status_checks": [ { "context": "Backend" }, { "context": "Secret scan" } ] } },
-    { "type": "deletion" }, { "type": "non_fast_forward" }
-  ]
-}
-EOF
-```
+- **App Platform**: `digitalocean/app_action/deploy@v2` reads
+  `.do/app.yaml`, creates the app on the first run and updates it after.
+  It needs the `DIGITALOCEAN_ACCESS_TOKEN` repository secret, which a
+  human creates (`gh secret set DIGITALOCEAN_ACCESS_TOKEN` prompts for the
+  value). Secrets passed as `env:` on the step are usable in the spec as
+  `${NAME}`.
+- **GHCR image**: `docker/login-action@v4` with `GITHUB_TOKEN`, then
+  `docker/build-push-action@v7` pushing `:latest` and `:<sha>` tags. The
+  job needs `packages: write`. Any host that pulls images can run it.
 
-Either one is fine; use the one you can type from memory.
+The workflow triggers on `workflow_run` of the CI workflow (matched by its
+`name:`) on the default branch and checks `conclusion == 'success'`, so a
+red CI never deploys. `workflow_dispatch` allows a manual re-deploy.
+`concurrency` with `cancel-in-progress: false` stops one deploy from
+being killed by the next.
 
-## 4. CD: deploy only from main, only after CI
-
-`templates/deploy-do.yml` deploys to DigitalOcean App Platform with the
-official action. It runs on `push` to `main` and uses
-`workflow_run` gating or `needs:` inside the same workflow so it never
-runs on a red build. The human creates the `DIGITALOCEAN_ACCESS_TOKEN`
-repository secret themselves (Settings, Secrets and variables, Actions,
-or `gh secret set DIGITALOCEAN_ACCESS_TOKEN`, which prompts for the value);
-the assistant never handles the token value.
-
-```yaml
-      - uses: digitalocean/app_action/deploy@v2
-        with:
-          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
-          print_build_logs: true
-          print_deploy_logs: true
-```
-
-The action reads `.do/app.yaml` by default (`app_spec_location`), creates
-the app on first run and updates it after, and exposes the app JSON as an
-output. Repository secrets passed as `env:` on the step can be referenced
-from the spec as `${SOME_SECRET}` bindables.
-
-Generic alternative, an image to GHCR that any host can pull:
-
-```yaml
-    permissions:
-      contents: read
-      packages: write
-    steps:
-      - uses: actions/checkout@v7
-      - uses: docker/login-action@v4
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - uses: docker/build-push-action@v7
-        with:
-          context: backend
-          push: true
-          tags: |
-            ghcr.io/${{ github.repository }}/api:latest
-            ghcr.io/${{ github.repository }}/api:${{ github.sha }}
-```
-
-Then the App Platform spec's `image:` block points at
-`registry_type: GHCR`, or a Droplet pulls the tag. Both variants are in
-`templates/deploy-do.yml`.
-
-## 5. Reading a red run fast
+### 7. Reading a red run
 
 ```
 gh run list --limit 5
@@ -187,27 +162,37 @@ gh pr checks <pr-number> --watch
 gh run rerun <run-id> --failed
 ```
 
-`--log-failed` prints only the failing step's log, which is the whole
-point under time pressure. The three failures that account for most red
-runs in a timed build:
+`--log-failed` prints only the failing step's log. Read the first error
+line, not the last; later lines are usually consequences.
 
-| Symptom in the log | Cause | One-line fix |
+### 8. The three common failures
+
+| Symptom in the log | Cause | Fix |
 | --- | --- | --- |
-| `ruff format --check` or `prettier --check` lists files, or `Would reformat` | formatter drift: code was written faster than it was formatted | run the formatter locally (`ruff format .`, `npx prettier --write src`), commit `style: format` |
-| `npm ci` says lockfile out of sync, `pnpm install --frozen-lockfile` fails, pip resolves a different version | lockfile mismatch after adding a dependency by hand | run the install locally without `--frozen`/`ci` once, commit the lockfile |
-| `KeyError`, `pydantic ValidationError`, `Settings` missing field, `Cannot read properties of undefined` in a config module | env var present in `.env` locally, absent in CI | add it to the job's `env:` with a safe test value, and to `.env.example` |
+| formatter lists files or says "Would reformat" (`ruff format --check`, `prettier --check`, `gofmt -l`) | code written faster than it was formatted | run the formatter locally, commit `style: format` |
+| `npm ci` reports lockfile out of sync; `pnpm install --frozen-lockfile` fails; pip resolves a different version | a dependency was added by hand without updating the lockfile | run the plain install once locally, commit the lockfile |
+| config module fails at import: `KeyError`, `ValidationError`, missing field, `Cannot read properties of undefined` | variable present in local `.env`, absent in CI | add it to the job's `env:` with a safe value and to `.env.example` |
 
-Second tier: a test that needs a running database (add a `services:`
-container or mark it `integration` and exclude it), a job that assumes
-`bash` on a Windows-authored script (`shell: bash` in `defaults`), and
-Node native binaries on a different platform (`npm ci` on Linux, do not
-commit `node_modules`).
+More cases (database needed by tests, Windows-authored scripts, native
+binaries, wrong check name in protection) are in
+`references/red-runs.md`.
 
-## 6. What to say in the demo
+## Outputs
 
-Point at three things: the green check on the latest commit and what it
-ran (name the steps), the protected branch (show the required checks in
-Settings or the `gh api` output), and the deploy job (the run on main,
-its log, the URL it printed). Then name the one thing that turned red
-during the session and the fix, because that is the "verify versus trust"
-moment the interviewer wants to hear.
+- `.github/workflows/ci.yml` with lint, typecheck, test, build and secret
+  scan jobs, green on the latest commit.
+- Branch protection on the default branch requiring those job names, and
+  delete-branch-on-merge enabled.
+- `.github/workflows/deploy.yml` (when a deploy target exists) that ran on
+  the default branch and printed a live URL or pushed an image tag.
+
+## Done when
+
+- `gh run list --limit 1` shows `completed success` for the latest commit
+  on the default branch, and the run's log shows each step executed.
+- `gh api repos/OWNER/REPO/branches/main/protection --jq
+  .required_status_checks.contexts` lists every CI job name.
+- A deliberately failing test pushed on a branch turns the check red and
+  blocks the merge; reverting it turns the check green again.
+- The deploy run on the default branch shows a URL that answers, or the
+  image tag is visible under the repository's Packages.

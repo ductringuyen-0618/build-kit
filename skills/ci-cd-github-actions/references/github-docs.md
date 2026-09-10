@@ -1,38 +1,11 @@
-# References used by the CI/CD skill
+# References for the CI/CD skill
 
-Checked 2026-09-09.
+Action versions and API shapes below were checked on 2026-09-09 against the
+linked pages. Major versions are the newest tag on each action's releases
+page on that date; older majors keep working. Re-check the links before
+bumping a version.
 
-## Source workflows the patterns were distilled from
-
-- TechPulse `.github/workflows/ci.yml`: single build job with
-  `dorny/paths-filter@v3` to detect backend/frontend changes,
-  `actions/setup-python@v5` with `cache: pip`, `actions/setup-node@v4`
-  with `cache: npm`, ruff, mypy, pytest, prettier `--check`, `tsc --noEmit`,
-  `npm run build`, an artifact-directory check, `pip-audit` and
-  `npm audit`, concurrency group with cancel-in-progress.
-- TechPulse `.github/workflows/deploy.yml`: test job, then build and push
-  to GHCR with `:main` and `:<sha>` tags, then deploy, then an E2E gate
-  against the live URL.
-- agent-os `.github/workflows/ci.yml`: `pnpm/action-setup@v4`,
-  `actions/setup-node@v4` with `cache: pnpm`, `pnpm install --frozen-lockfile`,
-  lint, build, `pnpm -r run typecheck`, test, `gitleaks/gitleaks-action@v2`
-  with `GITHUB_TOKEN`, and a tag-triggered release job with
-  `softprops/action-gh-release@v2`.
-- salon-hub `api-ci.yml` / `ci.yml`: `actions/setup-java@v4` temurin 17,
-  Gradle cache via `actions/cache@v4`, a `services: postgres:15`
-  container with `pg_isready` health options, `./gradlew test`,
-  `integrationTest`, `bootJar --no-daemon`, artifact uploads;
-  `api-publish-docker.yml`: `docker/login-action@v3` and
-  `docker/build-push-action@v5` to Docker Hub with `latest` and `sha` tags;
-  `web-ci.yml`: npm ci, lint, `test:ci`, build with `paths:` filters.
-- portfolio-website `deploy.yml`: `actions/checkout@v5`,
-  `actions/setup-node@v5` 22, `npm ci`, `npm run build`,
-  `peaceiris/actions-gh-pages@v4` to a deploy branch, `concurrency: pages`.
-
-## Actions and APIs (fetched 2026-09-09)
-
-Major versions are the newest tag on each action's releases page on that
-date. Older majors keep working; the templates use these.
+## Actions and APIs
 
 - `actions/checkout@v7` (`fetch-depth`, `ref`, `token`):
   https://github.com/actions/checkout
@@ -51,8 +24,9 @@ date. Older majors keep working; the templates use these.
   https://github.com/gradle/actions
 - `actions/setup-go@v7` (`go-version-file`, `cache` defaults to true):
   https://github.com/actions/setup-go
-- `dorny/paths-filter@v4` (`filters`, outputs `steps.<id>.outputs.<name>`;
-  needs `pull-requests: read` on PRs): https://github.com/dorny/paths-filter
+- `dorny/paths-filter@v4` (optional: run a job only when its folder
+  changed; `filters`, outputs `steps.<id>.outputs.<name>`; needs
+  `pull-requests: read` on PRs): https://github.com/dorny/paths-filter
 - `gitleaks/gitleaks-action@v3` (configured through `env`: `GITHUB_TOKEN`
   required; `GITLEAKS_LICENSE` required only for organisation-owned repos;
   `GITLEAKS_CONFIG`, `GITLEAKS_ENABLE_SUMMARY`):

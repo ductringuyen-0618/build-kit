@@ -1,15 +1,16 @@
-# GitHub Actions CI for a pnpm workspaces monorepo (pattern from agent-os).
-# Copy to .github/workflows/ci.yml. Requires root scripts: lint, build, test,
-# and a `typecheck` script in each package that has one.
+# GitHub Actions CI for a pnpm workspaces monorepo: one job runs the root
+# scripts across every package, plus a secret scan.
+# Copy to .github/workflows/ci.yml. Edit every line marked "# CHANGE:".
+# Expects root package.json scripts named lint, test and build, and a
+# typecheck script in each package that has one (pnpm skips the rest).
 
-name: CI
+name: CI   # deploy-do.yml refers to this workflow by this name
 
 on:
   push:
-    branches: [main, 'feature/**', 'bugfix/**', 'hotfix/**', 'refactor/**', 'docs/**']
-    tags: ['v*']
+    branches: [main]          # CHANGE: default branch if not main; add 'feature/**' etc. to check pushes that have no PR
   pull_request:
-    branches: [main]
+    branches: [main]          # CHANGE: default branch if not main
   workflow_dispatch:
 
 concurrency:
@@ -21,25 +22,31 @@ permissions:
 
 jobs:
   ci:
-    name: Lint, typecheck, test, build
+    name: Lint, typecheck, test, build   # CHANGE: this string is the status-check name branch protection requires
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-      # Reads the pnpm version from package.json "packageManager"; add
-      # `with: { version: 10 }` if that field is absent.
+      # pnpm/action-setup reads the pnpm version from the "packageManager"
+      # field in the root package.json. It must run before setup-node so
+      # that `cache: pnpm` can find the pnpm store.
       - uses: pnpm/action-setup@v6
+        # with:
+        #   version: 10       # CHANGE: uncomment if package.json has no "packageManager" field
       - uses: actions/setup-node@v7
         with:
-          node-version: '22'
+          node-version: '22'  # CHANGE
           cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm lint
-      - run: pnpm -r --if-present run typecheck
-      - run: pnpm test
-      - run: pnpm build
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Lint
+        run: pnpm lint                           # CHANGE: root script name
+      - name: Typecheck
+        run: pnpm -r --if-present run typecheck  # runs in every package that defines it
+      - name: Test
+        run: pnpm test                           # CHANGE: root script name
+      - name: Build
+        run: pnpm build                          # CHANGE: root script name
 
   secrets:
     name: Secret scan
@@ -48,7 +55,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          fetch-depth: 0
+          fetch-depth: 0      # full history, so a token committed and then removed is still found
       - uses: gitleaks/gitleaks-action@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}   # CHANGE: uncomment for organisation-owned repos (free key)
