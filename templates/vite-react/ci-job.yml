@@ -1,20 +1,21 @@
-# CI job snippet for a Vite/React frontend in frontend/.
-# Paste under `jobs:` in .github/workflows/ci.yml. `npm run verify` chains
-# typecheck, lint, format:check and build (see README.md in this folder).
+# GitHub Actions job for a Vite/React frontend. Paste under `jobs:` in
+# .github/workflows/ci.yml (keep the two-space indent). `npm run verify`
+# chains typecheck, lint, format:check and build (see README.md here).
+# Lines marked CHANGE are the ones a new repo must edit.
   frontend:
     name: Frontend
     runs-on: ubuntu-latest
     timeout-minutes: 15
     defaults:
       run:
-        working-directory: frontend
+        working-directory: frontend   # CHANGE: folder that holds package.json
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
-          node-version: '22'
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
+          node-version: '22'   # CHANGE: match the Dockerfile base image
+          cache: npm           # CHANGE: pnpm (and run `corepack enable` first) for pnpm
+          cache-dependency-path: frontend/package-lock.json   # CHANGE: same folder as working-directory
       - run: npm ci
       - run: npm run verify
-      - run: test -d dist
+      - run: test -f dist/index.html   # CHANGE: vite.config.ts build.outDir if changed

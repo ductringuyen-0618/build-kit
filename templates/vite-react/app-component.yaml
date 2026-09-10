@@ -1,15 +1,17 @@
-# App Platform static site component for a Vite/React frontend in frontend/.
-# Paste under `static_sites:` in .do/app.yaml and route `/` to it in ingress.
-# No Dockerfile: the platform runs the build command and serves output_dir.
+# DigitalOcean App Platform `static_sites:` entry for a Vite/React frontend.
+# Paste under `static_sites:` in .do/app.yaml (the kit's templates/do-app.yaml
+# shows the full spec, including the ingress rule that routes `/` here and
+# `/api` to the backend service). No Dockerfile: the platform runs
+# build_command and serves output_dir.
   - name: web
     github:
-      repo: OWNER/REPO
+      repo: OWNER/REPO            # CHANGE
       branch: main
       deploy_on_push: true
-    source_dir: frontend
+    source_dir: frontend          # CHANGE: folder that holds package.json
     build_command: npm ci && npm run build
-    output_dir: dist            # match vite.config.ts build.outDir
+    output_dir: dist              # CHANGE: vite.config.ts build.outDir if changed
     envs:
       - key: VITE_API_BASE_URL
         scope: BUILD_TIME
-        value: ${APP_URL}
+        value: ${APP_URL}         # same-origin; the ingress forwards /api to the backend

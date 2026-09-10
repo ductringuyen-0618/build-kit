@@ -1,25 +1,26 @@
-# App Platform service component for a Spring Boot backend in backend/.
-# Paste under `services:` in .do/app.yaml. Dockerfile is required (no Java buildpack).
+# DigitalOcean App Platform `services:` entry for a Spring Boot backend.
+# Paste under `services:` in .do/app.yaml (the kit's templates/do-app.yaml
+# shows the full spec). A Dockerfile is required: there is no Java buildpack.
   - name: api
     github:
-      repo: OWNER/REPO
+      repo: OWNER/REPO            # CHANGE
       branch: main
       deploy_on_push: true
-    source_dir: backend
+    source_dir: backend           # CHANGE: folder that holds the Dockerfile
     dockerfile_path: backend/Dockerfile
     http_port: 8080
     instance_count: 1
     instance_size_slug: apps-s-1vcpu-1gb
     health_check:
       http_path: /actuator/health
-      initial_delay_seconds: 40
+      initial_delay_seconds: 40   # JVM start; raise if the probe fails on first deploy
     envs:
       - key: SPRING_PROFILES_ACTIVE
         scope: RUN_TIME
         value: prod
       - key: SPRING_DATASOURCE_URL
         scope: RUN_TIME
-        value: ${db.JDBC_DATABASE_URL}
+        value: ${db.JDBC_DATABASE_URL}   # JDBC form of the managed database named `db`
       - key: SPRING_DATASOURCE_USERNAME
         scope: RUN_TIME
         value: ${db.USERNAME}
@@ -29,6 +30,7 @@
       - key: APP_ALLOWED_ORIGINS
         scope: RUN_TIME
         value: ${APP_URL}
+      # Secrets: declare the key with an empty value, set it in the control panel. CHANGE or delete.
       - key: APP_ADMIN_TOKEN
         scope: RUN_TIME
         type: SECRET

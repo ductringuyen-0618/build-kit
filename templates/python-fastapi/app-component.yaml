@@ -1,13 +1,13 @@
-# App Platform service component for a FastAPI backend in backend/.
-# Paste under `services:` in .do/app.yaml (see templates/do-app.yaml).
-# Buildpack variant: delete dockerfile_path, keep run_command; the buildpack
-# detects requirements.txt and sets PORT.
+# DigitalOcean App Platform `services:` entry for a FastAPI backend.
+# Paste under `services:` in .do/app.yaml (the kit's templates/do-app.yaml
+# shows the full spec). Dockerfile build shown; for the Python buildpack
+# delete dockerfile_path and uncomment run_command.
   - name: api
     github:
-      repo: OWNER/REPO
+      repo: OWNER/REPO            # CHANGE
       branch: main
       deploy_on_push: true
-    source_dir: backend
+    source_dir: backend           # CHANGE: folder that holds the Dockerfile
     dockerfile_path: backend/Dockerfile
     # run_command: uvicorn src.main:app --host 0.0.0.0 --port $PORT
     http_port: 8000
@@ -22,10 +22,11 @@
         value: production
       - key: DATABASE_URL
         scope: RUN_TIME
-        value: ${db.DATABASE_URL}
+        value: ${db.DATABASE_URL}   # bindable: the managed database named `db`
       - key: ALLOWED_ORIGINS
         scope: RUN_TIME
         value: ${APP_URL}
+      # Secrets: declare the key with an empty value, set it in the control panel. CHANGE or delete.
       - key: ADMIN_TOKEN
         scope: RUN_TIME
         type: SECRET

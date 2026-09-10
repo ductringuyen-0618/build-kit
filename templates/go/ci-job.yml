@@ -1,21 +1,24 @@
-# CI job snippet for a Go service in backend/.
-# Paste under `jobs:` in .github/workflows/ci.yml.
+# GitHub Actions job for a Go service. Paste under `jobs:` in
+# .github/workflows/ci.yml (keep the two-space indent). Lines marked
+# CHANGE are the ones a new repo must edit.
   backend:
     name: Backend
     runs-on: ubuntu-latest
     timeout-minutes: 15
     defaults:
       run:
-        working-directory: backend
+        working-directory: backend   # CHANGE: folder that holds go.mod
     env:
       ENVIRONMENT: testing
+      # CHANGE: if tests need a real database, add a `services:` block with a
+      # postgres container (see java-spring-boot/ci-job.yml) and set DATABASE_URL.
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-go@v7
         with:
-          go-version-file: backend/go.mod
+          go-version-file: backend/go.mod   # CHANGE: same folder as working-directory
       - run: go mod download
-      - run: gofmt -l . | tee /dev/stderr | test -z "$(cat)"
+      - run: test -z "$(gofmt -l .)" || { gofmt -l .; exit 1; }
       - run: go vet ./...
       - run: go test ./...
-      - run: go build -o bin/server ./cmd/server
+      - run: go build -o bin/server ./cmd/server   # CHANGE: package that holds main()

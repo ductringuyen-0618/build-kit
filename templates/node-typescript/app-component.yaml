@@ -1,12 +1,14 @@
-# App Platform service component for a Node/TypeScript backend in backend/.
-# Paste under `services:` in .do/app.yaml. Buildpack variant shown; for a
-# Dockerfile add dockerfile_path and drop build_command/run_command.
+# DigitalOcean App Platform `services:` entry for a Node/TypeScript backend.
+# Paste under `services:` in .do/app.yaml (the kit's templates/do-app.yaml
+# shows the full spec). Buildpack build shown (package.json + lockfile are
+# auto-detected); for the Dockerfile add `dockerfile_path: backend/Dockerfile`
+# and delete build_command / run_command.
   - name: api
     github:
-      repo: OWNER/REPO
+      repo: OWNER/REPO            # CHANGE
       branch: main
       deploy_on_push: true
-    source_dir: backend
+    source_dir: backend           # CHANGE: folder that holds package.json
     build_command: npm ci && npm run build
     run_command: npm start
     http_port: 8080
@@ -21,10 +23,11 @@
         value: production
       - key: DATABASE_URL
         scope: RUN_TIME
-        value: ${db.DATABASE_URL}
+        value: ${db.DATABASE_URL}   # bindable: the managed database named `db`
       - key: ALLOWED_ORIGINS
         scope: RUN_TIME
         value: ${APP_URL}
+      # Secrets: declare the key with an empty value, set it in the control panel. CHANGE or delete.
       - key: ADMIN_TOKEN
         scope: RUN_TIME
         type: SECRET

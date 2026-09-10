@@ -1,25 +1,26 @@
-# CI job snippet for a Node/TypeScript service in backend/.
-# Paste under `jobs:` in .github/workflows/ci.yml.
-# For a pnpm monorepo use templates/ci-monorepo.yml instead.
+# GitHub Actions job for a Node/TypeScript service. Paste under `jobs:` in
+# .github/workflows/ci.yml (keep the two-space indent). Lines marked
+# CHANGE are the ones a new repo must edit.
   backend:
     name: Backend
     runs-on: ubuntu-latest
     timeout-minutes: 15
     defaults:
       run:
-        working-directory: backend
+        working-directory: backend   # CHANGE: folder that holds package.json
     env:
       NODE_ENV: test
-      DATABASE_URL: postgres://postgres:postgres@localhost:5432/app_test
+      # CHANGE: if tests need a real database, add a `services:` block with a
+      # postgres container (see java-spring-boot/ci-job.yml) and set DATABASE_URL.
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
-          node-version: '22'
-          cache: npm
-          cache-dependency-path: backend/package-lock.json
+          node-version: '22'   # CHANGE: match the Dockerfile base image
+          cache: npm           # CHANGE: pnpm (and run `corepack enable` first) for pnpm
+          cache-dependency-path: backend/package-lock.json   # CHANGE: same folder as working-directory
       - run: npm ci
       - run: npm run lint
-      - run: npx tsc --noEmit
+      - run: npm run typecheck
       - run: npm test
       - run: npm run build
