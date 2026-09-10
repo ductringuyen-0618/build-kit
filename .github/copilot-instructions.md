@@ -1,12 +1,13 @@
 # Copilot instructions
 
-Read `AGENTS.md` at the repo root first. It is the entry point for every
-assistant: non-negotiables (tests and CI green before done, conventional
-commits, no secrets, README with run instructions, a deploy target from
-minute one), the load order for a timed build, and the conventions.
+Read `AGENTS.md` at the repo root first. It carries the non-negotiables,
+the load order for a timed build and the conventions. Then follow the
+playbook it names.
 
-Then follow `playbook/3-hour-build.md`. Choose the stack with
-`playbook/stack-picker.md`. Skills are plain Markdown under
-`skills/<name>/SKILL.md`; attach the relevant one to the chat as context
-before starting a phase. Per-stack scaffolding files live under
-`templates/<stack>/`.
+Skills are Agent Skills folders at `skills/<name>/SKILL.md`. Before each
+phase, read the skill the playbook names for it in full. If the skills
+were installed with `npx skills add ductringuyen-0618/build-kit` (or
+`gh skill install ductringuyen-0618/build-kit <name>`) they are under
+`.agents/skills/` and load on their own; otherwise attach
+`skills/<name>/SKILL.md` to the chat as context. `docs/porting.md` has
+the install steps.
