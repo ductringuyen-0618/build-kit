@@ -20,7 +20,18 @@ build/
 .DS_Store
 Thumbs.db
 
-# Local Claude Code state (this repo ships skills, not sessions)
+# Local assistant state (this repo ships skills, not sessions)
 .claude/settings.local.json
 .claude/worktrees/
 graphify-out/
+
+# Skills installed INTO this checkout by `npx skills add` or `gh skill install`.
+# The kit's own skills live in skills/; never re-ship someone else's.
+.agents/
+.claude/skills/
+.claude/agents/
+.cursor/skills/
+.codex/
+.github/skills/
+.windsurf/
+skills-lock.json

@@ -1,57 +1,112 @@
-# Porting the kit to a tool
+# Install
 
-Every skill is a folder with a `SKILL.md` whose frontmatter has a
-`description:` line, plus optional `references/`, `scripts/`, `examples/`
-or `features/`. The body is plain Markdown with no tool-specific syntax
-required to follow it. Where a skill names a Claude-only tool it says so
-and the intent is clear without it.
+The kit follows the open [Agent Skills](https://agentskills.io/specification)
+format: every skill is `skills/<name>/SKILL.md` with `name` and
+`description` frontmatter, plus optional `references/`, `scripts/`,
+`examples/` or `assets/`. Anything that reads that format can load these
+skills. There is no repo-level manifest; the `skills/` folder is the
+package.
 
-## Claude Code
+## One command, any tool
 
-Copy the folder into the session repo's `.claude/skills/` (project scope)
-or `~/.claude/skills/` (every repo). The skill then triggers by its
-description and can be invoked by name.
+The [`skills` CLI](https://github.com/vercel-labs/skills) (from
+[skills.sh](https://skills.sh)) discovers `skills/*/SKILL.md` in a GitHub
+repo and installs into the folder each tool reads. Run it inside the
+session repo:
 
 ```
-sh scripts/port.sh all claude <target-repo>
-sh scripts/port.sh grill-me claude <target-repo>
-powershell -File scripts/port.ps1 all claude <target-repo>
+npx skills add ductringuyen-0618/build-kit
 ```
 
-`CLAUDE.md` in the target repo should say "Read AGENTS.md". Agent personas
-go in `.claude/agents/<name>.md` (rename `AGENT.md` on copy).
+It prompts for which skills and which tools. Useful flags:
 
-## Cursor
+```
+npx skills add ductringuyen-0618/build-kit --list            # show what is in the repo
+npx skills add ductringuyen-0618/build-kit --all             # every skill, every detected tool, no prompts
+npx skills add ductringuyen-0618/build-kit -y \
+  -a claude-code cursor codex github-copilot windsurf \
+  -s grill-me deploy-digitalocean-app-platform ci-cd-github-actions
+npx skills add ductringuyen-0618/build-kit -g ...            # user-level (~/) instead of the project
+npx skills add ductringuyen-0618/build-kit --copy ...        # copy instead of symlink
+```
 
-Two options.
+What it writes, per tool (verified on 2026-09-09 against the public repo):
 
-1. Reference the file directly in chat: `@skills/grill-me/SKILL.md`.
-2. Turn it into a rule: `sh scripts/port.sh grill-me cursor <target-repo>`
-   writes `.cursor/rules/grill-me.mdc` with an `.mdc` frontmatter
-   (`description`, `globs`, `alwaysApply: false`) and the SKILL.md body,
-   and copies the skill's `references/` and `scripts/` next to it. Cursor
-   attaches a rule with `alwaysApply: false` when its description matches
-   the request, or when you mention it with `@`.
+| Tool | Project path | User path | Reads it because |
+| --- | --- | --- | --- |
+| Claude Code | `.claude/skills/<name>/` (symlink to `.agents/skills/<name>/`) | `~/.claude/skills/` | [Claude Code skills](https://code.claude.com/docs/en/skills) |
+| Cursor | `.agents/skills/<name>/` | `~/.cursor/skills/` | [Cursor skills](https://cursor.com/docs/skills) reads `.agents/skills/`, `.cursor/skills/` and, for compatibility, `.claude/skills/` |
+| Codex | `.agents/skills/<name>/` | `~/.agents/skills/` | [Codex skills](https://learn.chatgpt.com/docs/build-skills) |
+| GitHub Copilot | `.agents/skills/<name>/` | `~/.copilot/skills/` | [Copilot agent skills](https://docs.github.com/en/copilot/concepts/agents/about-agent-skills) reads `.github/skills`, `.claude/skills` or `.agents/skills` |
+| Windsurf | `.windsurf/skills/<name>/` (symlink to `.agents/skills/<name>/`) | `~/.codeium/windsurf/skills/` | [Windsurf skills](https://docs.windsurf.com/windsurf/cascade/skills) reads `.windsurf/skills/` and `.agents/skills/` |
 
-`.cursor/rules/build-kit.mdc` in this repo is the always-on entry rule; copy
-it too if the kit lives outside the session repo.
+`.agents/skills/` is the canonical copy; the other folders are symlinks to
+it. The CLI also writes `skills-lock.json` (source, path, content hash) so
+`npx skills update` can refresh later. On Windows, symlinks need Developer
+Mode or an elevated shell; pass `--copy` if the symlink step is skipped.
 
-## Codex, Copilot, Windsurf
+Skills carry `references/` and `scripts/` with them, so a skill that runs
+a script (`test-app-e2e`, `verify-techpulse`, `graphify-new-project`)
+works from the installed copy.
 
-These read `AGENTS.md` at the repo root (Copilot also reads
-`.github/copilot-instructions.md`). Keep the kit inside or next to the
-session repo and let `AGENTS.md` link to the skills. When a phase needs a
-skill, attach `skills/<name>/SKILL.md` to the chat as context, or paste
-its body.
+Once installed, a skill triggers by its `description` when the request
+matches, and Claude Code, Cursor and Codex can also invoke it by name
+(`/grill-me`).
+
+Copilot users can use GitHub's own installer instead:
+
+```
+gh skill install ductringuyen-0618/build-kit grill-me
+```
+
+## Entry point
+
+Every tool listed above also reads `AGENTS.md` at the repo root (Copilot
+additionally reads `.github/copilot-instructions.md`, Cursor
+`.cursor/rules/*.mdc`, Claude Code `CLAUDE.md`). Copy this repo's
+`AGENTS.md` into the session repo, or keep the kit checked out next to
+it and tell the assistant to read the kit's `AGENTS.md` first. The three
+tool-specific files in this repo are one-paragraph pointers at
+`AGENTS.md`; copy them too if you want them.
+
+Agent personas in `agents/<name>/AGENT.md` are Claude Code subagents.
+Copy one to `.claude/agents/<name>.md` in the session repo.
+
+## Manual fallback
+
+No `npx`, or no network to GitHub: clone the kit and copy or symlink the
+skill folders yourself. The target is any folder in the table above.
+
+```
+git clone https://github.com/ductringuyen-0618/build-kit.git
+mkdir -p .agents/skills
+cp -R build-kit/skills/grill-me .agents/skills/      # Cursor, Codex, Copilot
+cp -R build-kit/skills/grill-me .claude/skills/      # Claude Code
+cp -R build-kit/skills/grill-me .windsurf/skills/    # Windsurf
+```
+
+PowerShell: `Copy-Item -Recurse build-kit\skills\grill-me .agents\skills\`.
+
+The skill folder is the unit. Copy the whole folder, not just
+`SKILL.md`, or the `references/` and `scripts/` links inside it break.
 
 ## Plain chat
 
-Paste `AGENTS.md`, then the `SKILL.md` for the current phase. Skills with
-`scripts/` (test-app-e2e, verify-techpulse, graphify-new-project) need the
-script run locally; paste the script's output back.
+Paste `AGENTS.md`, then the `SKILL.md` for the current phase, then any
+file under its `references/` that the body points to. Skills with
+`scripts/` need the script run locally; paste its output back.
 
-## What was verified
+## Format notes for contributors
 
-The port scripts were run once on a temporary directory for `all claude`
-and `all cursor` and the resulting file layout was checked. Runtime
-behaviour inside Cursor, Codex, Copilot and Windsurf was not exercised.
+- `name` must equal the folder name, lowercase with hyphens, max 64
+  characters. `description` is required, max 1024 characters, and should
+  say what the skill does and when to use it. The CLI skips a skill with
+  no `name`.
+- Optional frontmatter: `license`, `compatibility`, `metadata`,
+  `allowed-tools`. Claude Code adds its own fields (`disable-model-invocation`,
+  `context: fork`, `paths`, ...) which other tools ignore.
+- Keep `SKILL.md` under 500 lines; move detail into `references/`.
+- Validate with `skills-ref validate skills/<name>` from
+  [agentskills/agentskills](https://github.com/agentskills/agentskills/tree/main/skills-ref).
+- Anthropic's own skills at [anthropics/skills](https://github.com/anthropics/skills)
+  use the same layout and are a good reference for tone and length.
