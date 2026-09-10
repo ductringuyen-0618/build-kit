@@ -40,7 +40,8 @@ Read AGENTS.md in this repo first, then follow playbook/3-hour-build.md for the 
 ## Skills
 
 Every skill is `skills/<name>/SKILL.md` with `name` and `description`
-frontmatter, plus optional `references/` and `briefings/`. Phases refer
+frontmatter, plus optional `references/`, `briefings/`, `scripts/` and
+`examples/`. Phases refer
 to the playbook: clarify (0-15 min), core (15-90), hardening or second
 feature (90-150), ship (150-180).
 
@@ -51,19 +52,19 @@ feature (90-150), ship (150-180).
 | `write-issue` | Turn one ticket-sized piece of work into a GitHub issue, or `docs/issues/<slug>.md`, with testable acceptance criteria | clarify, second feature |
 | `codebase-map` | Build a working mental map of an unfamiliar repo in ten minutes; writes `docs/CODEBASE.md` | clarify (existing repo) |
 | `propose-feature` | Read the repo and propose exactly one well-argued next feature with a validation contract | second feature |
-| `scaffold-service` | Stand up the chosen stack with a health endpoint, one passing test, a settings module and the template files | clarify |
+| `scaffold-service` | Minute 0 to 15: repo skeleton for the chosen stack with a settings module, a health endpoint that checks the database, one real test, README, `.env.example`, Dockerfile, CI job, App Platform component, first commit, green CI | clarify |
 | `ci-cd-github-actions` | Minimal CI in the first commit, secret scan, branch protection, main-only deploy job, reading a red run fast | clarify |
 | `feature-brief` | Turn a request or issue into `docs/features/<slug>.md`: scope plus a validation contract of checkable assertions and exact commands | clarify, core |
 | `feature-build` | Implement the brief on a `feature/<slug>` branch in small conventional commits, nothing outside scope | core |
 | `feature-validate` | Run the exact commands CI runs plus the brief's contract; first line `PASS` or `FAIL` with real output | core, hardening |
 | `feature-review` | Product-quality review of the validated branch against its brief; `PASS` or `FAIL` with file-level reasons | hardening |
 | `e2e-verify` | Boot the app, run a minimal end-to-end smoke suite (Playwright or manual click-through), report with commands and output | core, hardening |
-| `smoke-verify` | Hit the running service over HTTP for health, the main write, the main read and one error path | core, ship |
-| `ship-gate` | The final checklist before calling a build shipped: CI green, README works, public URL answers, secrets clean | ship |
+| `smoke-verify` | Stdlib `scripts/smoke.py` (or its curl equivalent): a validation contract as a list of GET and POST checks with expected status and substring, `PASS` or `FAIL` per check, run locally after every feature and against the deployed URL before the demo | core, hardening, ship |
+| `ship-gate` | Scrub the validator output, push, open the PR with the contract in the body, wait for CI, read the failing log, one fix attempt, then the shipped report; zero checks is not green | ship |
 | `deploy-digitalocean-app-platform` | `.do/app.yaml`, `doctl` create and logs, managed database binding, live URL, registry fallback, cleanup | ship |
-| `walkthrough-prep` | Turn the session's notes into the walkthrough: decisions, trade-offs, what the AI got wrong, what is next | ship |
-| `timebox` | Hold the clock: phase budgets, the cut table, when to stop adding and ship | every phase |
-| `missions` | Orchestrator, worker and independent validator pattern for multi-hour, multi-milestone runs; briefings included | reference (too heavy for a timed build) |
+| `walkthrough-prep` | Keep `docs/DECISIONS.md` as you go (decision, alternatives, verified versus trusted), then turn it into the walkthrough script with scaling answers grounded in the platform's docs | every phase, ship |
+| `timebox` | `docs/TIMELOG.md`, commit every fifteen minutes, the cut rules at each checkpoint minute, the verify-before-trust habit list | every phase |
+| `missions` | Orchestrator, serial workers and independent validators for multi-hour, multi-milestone runs; its `briefings/` (runner, worker, scrutiny validator, user-testing validator) paste into a fresh chat and are usable on their own | reference; briefings in core and hardening |
 
 Skills that were removed because they needed a specific runtime or tool
 are listed in [`docs/removed-skills.md`](docs/removed-skills.md).
@@ -107,11 +108,15 @@ CLAUDE.md                 "read AGENTS.md" plus Claude Code notes
 .cursor/rules/            always-on Cursor rule pointing at AGENTS.md
 .github/                  copilot-instructions.md
 playbook/                 3-hour-build.md, stack-picker.md
-skills/<name>/            SKILL.md plus references/, briefings/
+skills/<name>/            SKILL.md plus references/, briefings/, scripts/, examples/
 agents/                   role briefs (coordinator, builder, validators, reviewer)
 templates/                ci.yml, ci-monorepo.yml, deploy-do.yml, do-app.yaml, <stack>/
-docs/                     porting.md, interview-format.md, third-party-skills.md, removed-skills.md
+docs/                     porting.md, the-loop.md, interview-format.md, third-party-skills.md, removed-skills.md
 ```
+
+[`docs/the-loop.md`](docs/the-loop.md) explains where the loop came
+from, what leaked when it ran unattended, and which skill closes each
+leak.
 
 ## Provenance
 

@@ -97,7 +97,9 @@ The skill folder is the unit. Copy the whole folder, not just
 
 Paste `AGENTS.md`, then the `SKILL.md` for the current phase, then any
 file under its `references/` that the body points to. Skills with
-`scripts/` need the script run locally; paste its output back.
+`scripts/` (`smoke-verify`) need the script run locally; paste its
+output back. The `missions/briefings/` files are meant to be pasted
+whole into a fresh chat, one per role.
 
 ## Format notes for contributors
 

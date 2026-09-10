@@ -88,9 +88,12 @@ existing repo, runs the same loop:
 
 ### Backend-only service
 
-1. `timebox`: start the clock, know the phase budgets and the cut table.
+1. `timebox`: start the clock in `docs/TIMELOG.md`, read the cut rules
+   and the verify-before-trust list once, commit every fifteen minutes
+   from here on.
 2. `playbook/stack-picker.md`: choose the stack in one minute. Write it
-   at the top of `docs/demo-notes.md`.
+   at the top of `docs/demo-notes.md` and as the first entry in
+   `docs/DECISIONS.md` (`walkthrough-prep` keeps that file).
 3. `grill-me`: five to eight questions, then `docs/design.md`.
 4. `write-issue`: one issue for the core feature with three to six
    acceptance criteria, then `feature-brief` to turn it into
@@ -98,13 +101,23 @@ existing repo, runs the same loop:
 5. `scaffold-service` with `templates/<stack>/`, then
    `ci-cd-github-actions` for the workflow and branch protection. First
    commit: scaffold, health endpoint, one passing test, CI green.
-6. `feature-build`: tests first, small commits, on `feature/<slug>`.
-7. `feature-validate` after every meaningful change and before every push.
-8. `smoke-verify`: hit the running service over HTTP.
-9. `feature-review` against the brief before calling it done.
+6. `feature-build` (or a fresh session briefed with
+   `missions/briefings/worker.md`): tests first, small commits, on
+   `feature/<slug>`, never pushed by the builder.
+7. `feature-validate` (or `missions/briefings/validator-scrutiny.md` in a
+   fresh session) after every meaningful change and before every push.
+8. `smoke-verify`: turn the contract into checks and run
+   `scripts/smoke.py` against the local server after every feature.
+9. `feature-review` (or `missions/briefings/validator-user-testing.md`
+   for anything user-facing) against the brief before calling it done.
 10. `deploy-digitalocean-app-platform`: spec, create, logs, live URL, then
-    `smoke-verify` again against the public URL.
-11. `ship-gate`, then `walkthrough-prep` for the notes and README.
+    `smoke-verify` again against the public URL with the output pasted
+    into `docs/demo-notes.md`.
+11. `ship-gate`: scrub, push, PR with the contract and validator output
+    in the body, wait for CI, one fix from the failing log, then the
+    shipped report.
+12. `walkthrough-prep`: turn `docs/DECISIONS.md` and the timelog into the
+    walkthrough. README, final commit, CI green, browser tab open.
 
 ### Full-stack app
 
@@ -124,9 +137,11 @@ Same order, with these additions:
 
 `propose-feature` reads the repo and puts one well-argued feature in
 front of the human. `write-prd` sits between `grill-me` and `write-issue`
-only when the work is bigger than one ticket. `missions` is the pattern
-for multi-hour, multi-milestone runs with independent validators; it is
-reference material in a timed session.
+only when the work is bigger than one ticket. `missions` is the full
+pattern for multi-hour, multi-milestone runs with independent
+validators; in a timed session use only its briefings, one per role.
+`docs/the-loop.md` explains where the loop above came from and which
+real failures shaped it.
 
 ## Role briefs
 
