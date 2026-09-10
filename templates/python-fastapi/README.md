@@ -1,7 +1,8 @@
 # python-fastapi
 
-FastAPI + SQLAlchemy + pytest backend in `backend/`. Listens on `PORT`
-(default 8000); health check is `GET /health`.
+FastAPI + SQLAlchemy + pytest backend in `backend/`. The app object is
+`src.main:app` (every `src.main` in the four files is a `# CHANGE:` placeholder for it).
+Listens on `PORT` (default 8000); health check is `GET /health`.
 
 ## Scaffold (from the repo root)
 
@@ -37,7 +38,7 @@ def test_health():
 | Task | Command |
 | --- | --- |
 | run | `uvicorn src.main:app --reload --port 8000` |
-| test | `pytest -q` |
+| test | `pytest -q`; black-box pass per `skills/e2e-verify` before demo |
 | lint | `ruff check . && ruff format --check .` |
 | typecheck | `mypy . --ignore-missing-imports` |
 | build | `docker build -t api .` |
@@ -53,7 +54,6 @@ def test_health():
 
 - One `Settings` class (pydantic-settings) reads the environment; nothing else touches `os.environ`.
 - `DATABASE_URL` is a SQLAlchemy URL: `sqlite:///./data/app.db` locally, Postgres in the deploy.
-- Mount routes with one slash style (`/api/items/`) and call that exact path from clients;
-  FastAPI's 307 redirect does not carry CORS headers.
+- Mount routes with one slash style (`/api/items/`) and call that exact path; the 307 redirect drops CORS headers.
 - `/health` reports each dependency honestly and returns 503 when one is down.
 - External services (LLMs, third-party APIs) sit behind a small interface with a fake used in tests.
