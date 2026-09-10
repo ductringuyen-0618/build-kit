@@ -6,8 +6,8 @@ description: Multi-agent execution framework for long-running software goals (ho
 > **Portability.** "Spawn a subagent with the `Agent` tool" means: start a
 > fresh session or chat with only the briefing as input. In Claude Code
 > that is the `Agent` tool; in Cursor or a plain chat it is a new
-> conversation with the briefing pasted in. See `README.md` in this folder
-> for the bundled files that are not present.
+> conversation with the briefing pasted in. `README.md` in this folder
+> says how to use the bundled briefings and references.
 
 # missions — long-running multi-agent execution
 
@@ -158,7 +158,8 @@ When all milestones pass (or when stopping early):
 
 ## How to spawn subagents
 
-In Cowork, use the `Agent` tool:
+In Claude Code use the `Agent` tool; in any other tool open a fresh chat
+per role and paste the briefing:
 
 - **Worker**: subagent_type `general-purpose`, prompt = the briefing in
   `briefings/worker.md` filled in with milestone-specific values
@@ -221,10 +222,13 @@ Open these when you need depth on a concept:
 ### briefings/
 Templates the orchestrator pastes into `Agent` tool calls. Don't summarise
 these in chat — paste them directly:
+- `runner.md` — the orchestrator's own checklist: mission file shape,
+  attempts counter, stop rule
 - `worker.md` — for the implementer subagent
 - `validator-scrutiny.md` — for the code-review / tests validator
 - `validator-user-testing.md` — for the QA / app-driving validator
 
 ### examples/
-- `example-mission.md` — a worked mission for adding APScheduler-driven
-  ingestion to this very project
+- `example-mission.md` — a worked mission file for adding scheduled
+  ingestion to a FastAPI news service, including one failed validation
+  and the fix cycle
