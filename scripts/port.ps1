@@ -53,7 +53,8 @@ function Port-One([string]$name) {
         $desc = $fm.Description -replace '"', '\"'
         $header = @("---", "description: `"$desc`"", "globs:", "alwaysApply: false", "---")
         $utf8 = New-Object System.Text.UTF8Encoding($false)
-        [System.IO.File]::WriteAllLines($out, [string[]]($header + $fm.Body), $utf8)
+        $text = (($header + $fm.Body) -join "`n") + "`n"
+        [System.IO.File]::WriteAllText($out, $text, $utf8)
         foreach ($d in @('references', 'scripts', 'examples', 'features')) {
             $sd = Join-Path $src $d
             if (Test-Path $sd) {
