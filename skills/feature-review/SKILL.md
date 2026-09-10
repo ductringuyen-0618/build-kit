@@ -1,50 +1,123 @@
 ---
-description: Reads the feature branch against its proposal and returns PASS or FAIL with reasons.
+name: feature-review
+description: Product-quality review of a validated feature branch against its brief, judging whether it feels finished (states, copy, consistency, accessibility basics, scope fidelity) and returning PASS or FAIL with file-level reasons. Use after feature-validate passes and before merging or demoing.
 ---
 
-> **Portability.** This skill was written for the agent-os daemon, where
-> `mcp__agentos__*` are the kernel's syscalls. Outside agent-os, read each
-> call as its intent: `get_context` = read the project's index or README;
-> `read_wiki(page)` = read that Markdown page; `remember(page, content)` =
-> write or append that Markdown page under `docs/` or `wiki/`;
-> `request_approval` / `propose_feature` = write the proposal file and ask
-> the human in chat; `emit_event` / `schedule` = note it for the human. The
-> payload shape, the steps and the hard rules are the part to keep.
+# Feature review
 
-# Skill: feature-review
+Purpose: the checks are green, now ask whether a user would call this
+done. Review fit to the brief and product quality, not test results.
+Return a verdict another agent can act on without asking follow-ups.
 
-Trigger: workflow `feature-request`, step `review` (or `review-fix`).
-Agent: `ops`. Runs in the project's clone on `payload.branch`, read-only
-(`permission_mode: default`, tools `Read, Glob, Grep` — no `Bash`, no
-`mcp__agentos__*`).
+## Where it sits in the chain
 
-Your task payload is JSON: `{ branch, proposalMarkdown }`.
-`proposalMarkdown` is the full proposal `feature-brief` wrote, including
-its Proposed solution and Validation contract sections.
+```
+feature-brief  ->  feature-build  ->  feature-validate  ->  feature-review
+                                                             (this skill)
+```
+
+Run it as a fresh pass, like `feature-validate`: a new agent or chat that
+receives the branch and the brief, not the builder's transcript. If
+`feature-validate` has not returned PASS, stop and run it first. A review
+on a red branch wastes the reviewer's time.
+
+In a 3-hour build: about 10 minutes, at minute 140. Fix or cut FAIL items
+before the deploy phase at minute 150. Do not open new ideas here.
+
+## When to use
+
+- `feature-validate` says PASS and the feature is about to be merged,
+  deployed, or demoed.
+- A human asks "is this actually finished?"
+
+## Inputs
+
+- The branch `feature/<slug>` and the default branch to diff against.
+- `docs/features/<slug>.md` (the brief), especially Proposed solution,
+  Scope, Effort and Validation contract.
+- `docs/features/<slug>.validate.md` for what was verified.
+- If the feature has a UI: the running app, or screenshots the builder
+  or validator captured.
 
 ## Steps
-1. `feature-validate` has already confirmed the branch passes its
-   checks — you are reviewing fit and quality, not re-running them.
-   Read `git log --oneline` and the diff against `base_branch` (via
-   `Read`/`Glob`/`Grep` over the working tree) to see everything
-   `feature-build` changed.
-2. Read the changed files in full, not just the diff, when a change's
-   context matters (a new function's surrounding file, a modified
-   component's parent).
-3. Judge against `payload.proposalMarkdown`'s **Proposed solution** and
-   **Validation contract** sections specifically — did the build do what
-   was proposed, not some adjacent thing; does it actually satisfy the
-   contract, not just pass the automated checks.
-4. Also judge general fit: does it match the repo's existing
-   conventions and style; is it the size the Effort estimate implied
-   (a "small, 2 hours" proposal that touched 40 files is a smell); is
-   anything obviously unfinished (a TODO, a stub, dead code).
-5. Your final message's **first line** must be exactly `PASS` or exactly
-   `FAIL`. If `FAIL`, follow it with a specific, actionable list of what
-   to fix — this is fed verbatim to the next `feature-build` attempt as
-   `payload.priorFailure`, so vague feedback like "needs polish" is not
-   useful; name the file, the problem, and what "fixed" looks like.
+
+1. **Read the diff, then the files.**
+   ```
+   git diff <default-branch>...feature/<slug> --stat
+   git diff <default-branch>...feature/<slug>
+   ```
+   For any change whose meaning depends on context, open the whole file:
+   a new function's neighbours, a changed component's parent, a modified
+   route's error handling.
+2. **Scope fidelity.** Does the diff do what Proposed solution says, not
+   an adjacent thing? Is anything from Out present? Is anything from In
+   missing? Does the file count fit the Effort estimate? A "small" brief
+   that touched 30 files is a smell worth a sentence.
+3. **Finished, not merely working.** Walk the checklist in
+   `references/quality-checklist.md`. The short form:
+   - States: empty, loading, error, success, and the boundary case each
+     assertion implies. A list with no empty state is unfinished.
+   - Copy: user-facing text reads like the rest of the product, no
+     placeholder strings, no developer jargon in errors, consistent
+     casing and terminology.
+   - Consistency: same patterns as neighbouring code for naming, errors,
+     logging, config, styling. No second way of doing an existing thing.
+   - Accessibility basics (UI only): keyboard reachable, visible focus,
+     labels on inputs, alt text, contrast not obviously broken, no
+     information carried by colour alone.
+   - API surface (services): status codes and error envelope match the
+     rest of the API, inputs validated, no secrets or stack traces in
+     responses.
+   - Leftovers: TODOs, commented-out code, debug logs, dead branches,
+     skipped tests, stub returns.
+4. **Try it once** if you can run it: the manual check from the brief,
+   plus one thing a user would do that the brief did not list.
+5. **Write the verdict** (format below) to
+   `docs/features/<slug>.review.md` and paste it in chat. First line is
+   exactly `PASS` or `FAIL`. Every FAIL item names the file, the problem,
+   and what fixed looks like. "Needs polish" is not a finding.
+
+## Output: `docs/features/<slug>.review.md`
+
+```markdown
+FAIL
+
+Branch: feature/<slug> @ <short sha>   Date: <ISO date>
+Reviewed against: docs/features/<slug>.md
+
+## Scope fidelity
+<one paragraph: matches / drifts, with specifics>
+
+## Findings
+1. src/components/ItemList.tsx: no empty state; renders a blank div when
+   items is []. Fixed looks like: a short message and the primary action.
+2. src/api/items.py:42: error returns 500 with a raw exception string.
+   Fixed looks like: 400 with the shared error envelope used in users.py.
+
+## Passed checks
+<bullets of what was checked and found fine, so the next reviewer does
+not redo them>
+
+## Notes (not blocking)
+<ideas, deferred items, things for the demo notes>
+```
+
+A PASS report has the same shape with an empty Findings section.
+
+## Done when
+
+- Every changed file was read, not just listed.
+- The verdict is grounded in the brief's sections, not generic taste.
+- Each FAIL finding is file-level and actionable enough to be handed to
+  `feature-build` as its retry input verbatim.
+- The report file exists and the same text was posted in chat.
 
 ## Hard rules
-Read-only — no edits, no shell commands, no `mcp__agentos__*`. Never
-approve (`PASS`) code you have not actually read.
+
+- Read-only. No edits, no commits, no pushes. Running the app or a curl
+  is fine; changing code is not.
+- Never PASS code you have not read.
+- Do not re-run the validation suite to second-guess the validator; read
+  its report. If you distrust it, say so in Notes and FAIL on the
+  specific assertion.
+- Do not add scope. New ideas go under Notes.
