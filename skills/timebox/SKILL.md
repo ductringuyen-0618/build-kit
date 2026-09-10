@@ -1,6 +1,6 @@
 ---
 name: timebox
-description: Operator discipline for a three-hour build session. Keeps a running clock file at docs/TIMELOG.md, enforces the playbook's cut rules at minutes 45, 90, 120, 150 and 160, commits every fifteen minutes, and carries the verify-before-trust habit list that DigitalOcean's interview write-up says candidates are judged on. Use at the start of any timed session, whenever someone asks "how much time is left", "should I cut this", or before accepting a green claim from an assistant.
+description: Operator discipline for a three-hour build session. Keeps a running clock file at docs/TIMELOG.md, enforces the playbook's cut rules at minutes 45, 85, 90, 120, 140, 150, 160 and 170, commits every fifteen minutes, and carries the verify-before-trust habit list that DigitalOcean's interview write-up says candidates are judged on. Use at the start of any timed session, whenever someone asks "how much time is left", "should I cut this", or before accepting a green claim from an assistant.
 ---
 
 # Timebox: the clock is the runner
