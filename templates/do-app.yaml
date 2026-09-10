@@ -1,0 +1,108 @@
+# DigitalOcean App Platform spec. Copy to .do/app.yaml at the repo root.
+#   doctl apps create --spec .do/app.yaml
+#   doctl apps get <app-id> --format DefaultIngress
+#   doctl apps update <app-id> --spec .do/app.yaml
+# Reference: https://docs.digitalocean.com/products/app-platform/reference/app-spec/
+#
+# Worked example: one web service (api) + one static site (web) + one dev
+# Postgres database (db) + one pre-deploy migration job, all under one URL.
+# Per-stack component snippets live in templates/<stack>/app-component.yaml;
+# swap the `api` block for the stack in use.
+#
+# Secrets: never put values here. Declare the key with type SECRET and an
+# empty value, then set it in the control panel (or paste the EV[...] text
+# the panel produces). ${...} values are bindable variables the platform fills.
+
+name: interview-app
+region: nyc
+
+services:
+  - name: api
+    github:
+      repo: OWNER/REPO
+      branch: main
+      deploy_on_push: true
+    source_dir: backend
+    dockerfile_path: backend/Dockerfile   # remove to use the buildpack
+    # run_command: uvicorn src.main:app --host 0.0.0.0 --port $PORT   # buildpack only
+    http_port: 8000
+    instance_count: 1
+    instance_size_slug: apps-s-1vcpu-1gb
+    health_check:
+      http_path: /health
+      initial_delay_seconds: 15
+    envs:
+      - key: ENVIRONMENT
+        scope: RUN_TIME
+        value: production
+      - key: DATABASE_URL
+        scope: RUN_TIME
+        value: ${db.DATABASE_URL}
+      - key: ALLOWED_ORIGINS
+        scope: RUN_TIME
+        value: ${APP_URL}
+      - key: ADMIN_TOKEN
+        scope: RUN_TIME
+        type: SECRET
+        value: ""
+
+# Remove this block for a backend-only service.
+static_sites:
+  - name: web
+    github:
+      repo: OWNER/REPO
+      branch: main
+      deploy_on_push: true
+    source_dir: frontend
+    build_command: npm ci && npm run build
+    output_dir: dist          # Vite default; match vite.config.ts build.outDir
+    envs:
+      - key: VITE_API_BASE_URL
+        scope: BUILD_TIME
+        value: ${APP_URL}
+
+# One public URL: /api and /health go to the service, everything else to the site.
+ingress:
+  rules:
+    - component:
+        name: api
+        preserve_path_prefix: true
+      match:
+        path:
+          prefix: /api
+    - component:
+        name: api
+        preserve_path_prefix: true
+      match:
+        path:
+          prefix: /health
+    - component:
+        name: web
+      match:
+        path:
+          prefix: /
+
+# Dev database: cheapest managed Postgres, provisioned with the app.
+databases:
+  - name: db
+    engine: PG
+    production: false
+
+# Migrations before each deploy. Remove if the container runs them on start.
+jobs:
+  - name: migrate
+    kind: PRE_DEPLOY
+    github:
+      repo: OWNER/REPO
+      branch: main
+    source_dir: backend
+    dockerfile_path: backend/Dockerfile
+    run_command: alembic upgrade head
+    envs:
+      - key: DATABASE_URL
+        scope: RUN_TIME
+        value: ${db.DATABASE_URL}
+
+alerts:
+  - rule: DEPLOYMENT_FAILED
+  - rule: DOMAIN_FAILED
