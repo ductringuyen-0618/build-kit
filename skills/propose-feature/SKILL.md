@@ -10,7 +10,7 @@ exactly one concrete, worthwhile feature in front of the human as a short
 proposal. You do not build it and you do not decide for them: the human
 approves, edits or rejects, and only then does building start.
 
-Use this when the interview prompt is open-ended ("build something useful
+Use this when the prompt is open-ended ("build something useful
 on top of this"), when the first feature is done and time remains, or when
 the human asks "what should we do next?".
 

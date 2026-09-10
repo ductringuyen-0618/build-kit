@@ -21,7 +21,7 @@ test passes fastest from an empty folder.
 
 | Signal | Pick |
 | --- | --- |
-| Interviewer or prompt names a language | that language, no debate |
+| The prompt, or the person you are building for, names a language | that language, no debate |
 | Prompt is API-first with a data model and one business rule | the backend stack you are fastest in; skip the frontend or serve a minimal page from the backend |
 | Prompt needs a visible UI for the demo | backend of choice plus Vite/React; Next.js only if you have shipped with it recently |
 | Prompt mentions concurrency, workers, or "handle a spike" | Go or Spring Boot; both have a clean story for the scaling hypotheticals |
