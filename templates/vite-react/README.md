@@ -34,7 +34,7 @@ First check: `npm run verify` passes and `dist/index.html` exists.
 | Task | Command |
 | --- | --- |
 | run | `npm run dev` (http://localhost:5173) |
-| test | `npm run verify` (typecheck + lint + format + build; add Playwright specs if time allows) |
+| test | `npm run verify` (typecheck + lint + format + build); browser pass per `skills/e2e-verify` |
 | lint | `npm run lint && npm run typecheck` |
 | build | `npm run build` (writes `dist/`) |
 | image | `docker build --build-arg VITE_API_BASE_URL=https://api.example.com -t web .` |
