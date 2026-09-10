@@ -1,0 +1,88 @@
+# GitHub Actions CI for a backend/ (FastAPI) + optional frontend/ (Vite) repo.
+# Copy to .github/workflows/ci.yml. Both jobs skip cleanly if their folder
+# does not exist, so this works for a backend-only service too.
+
+name: CI
+
+on:
+  push:
+    branches: [main, 'feature/**', 'bugfix/**', 'hotfix/**', 'refactor/**', 'docs/**']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Backend lint, typecheck, test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      ENVIRONMENT: testing
+      DATABASE_URL: sqlite:///./data/ci.db
+    steps:
+      - uses: actions/checkout@v4
+      - id: present
+        run: test -f requirements.txt && echo "yes=true" >> "$GITHUB_OUTPUT" || echo "yes=false" >> "$GITHUB_OUTPUT"
+      - if: steps.present.outputs.yes == 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - if: steps.present.outputs.yes == 'true'
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install ruff mypy pytest
+      - if: steps.present.outputs.yes == 'true'
+        run: ruff check . && ruff format --check .
+      - if: steps.present.outputs.yes == 'true'
+        run: mypy . --ignore-missing-imports
+      - if: steps.present.outputs.yes == 'true'
+        run: mkdir -p data && pytest tests -q
+      - if: steps.present.outputs.yes == 'true'
+        run: python -c "from src.main import app"
+
+  frontend:
+    name: Frontend typecheck, lint, format, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - id: present
+        run: test -f package.json && echo "yes=true" >> "$GITHUB_OUTPUT" || echo "yes=false" >> "$GITHUB_OUTPUT"
+      - if: steps.present.outputs.yes == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - if: steps.present.outputs.yes == 'true'
+        run: npm ci
+      - if: steps.present.outputs.yes == 'true'
+        run: npm run verify
+
+  secrets:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
