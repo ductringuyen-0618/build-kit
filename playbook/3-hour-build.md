@@ -22,7 +22,7 @@ That file is the walkthrough.
 - Connect GitHub to App Platform once in the control panel so
   `deploy_on_push` works from the spec. If that is not possible, plan on
   the container registry path in the deploy skill.
-- Install DigitalOcean's skills: `npx skills add digitalocean-labs/do-app-platform-skills`.
+- Install DigitalOcean's skills: `git clone https://github.com/digitalocean-labs/do-app-platform-skills.git` then symlink it: `ln -s "$PWD/do-app-platform-skills" ~/.claude/skills/do-app-platform-skills` (or `~/.cursor/skills/`, `~/.codex/skills/`).
 - Have this kit cloned and the assistant pointed at `AGENTS.md`.
 
 ## 0-15 minutes: pick, clarify, scaffold

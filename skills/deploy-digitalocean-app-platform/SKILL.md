@@ -10,10 +10,14 @@ under 30 minutes, and a story for the walkthrough about what was verified.
 Command syntax below was checked against the DigitalOcean docs listed in
 `references/digitalocean-docs.md`; flags not listed there are not used.
 
-If the machine has network access and `npx`, try DigitalOcean's own
-skills first: `npx skills add digitalocean-labs/do-app-platform-skills`.
-They are maintained by DigitalOcean and cover more cases than this file.
-This skill is the version that works with nothing installed but `doctl`.
+If the machine has network access, install DigitalOcean's own skills
+first: `git clone https://github.com/digitalocean-labs/do-app-platform-skills.git`
+then `mkdir -p ~/.claude/skills && ln -s "$PWD/do-app-platform-skills" ~/.claude/skills/do-app-platform-skills`
+(the README gives the same symlink for `~/.codex/skills` and
+`~/.cursor/skills`). They are maintained by DigitalOcean (designer,
+deployment, networking, Postgres, managed databases, migration,
+troubleshooting) and cover more cases than this file. This skill is the
+version that works with nothing installed but `doctl`.
 
 ## Time box
 

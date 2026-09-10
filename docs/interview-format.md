@@ -104,7 +104,8 @@ says gets observed: visible judgment. Concretely:
 ## Related DigitalOcean material
 
 DigitalOcean publishes its own agent skills for App Platform, announced
-2026-03-16, installable with `npx skills add digitalocean-labs/do-app-platform-skills`.
+2026-03-16. The repo README installs them by `git clone` plus a symlink
+into `~/.claude/skills` (or the Codex and Cursor equivalents).
 They cover app-spec generation, Postgres defaults, GitHub Actions and
 credential handling. If the interview machine allows it, install them
 before the session. Source:

@@ -27,7 +27,7 @@ When the user starts a new project, build a code-only knowledge graph for it so
 later sessions can understand the codebase without grepping every file. This is
 a thin, fast wrapper around graphify's AST extraction — **no LLM tokens, no
 subagents, no API key**. It reuses the exact two-step build we validated on the
-`D:\Portfolio` repos (`portfolio-website`, `ai-tech-news-assistant`,
+author's portfolio repos (`portfolio-website`, `ai-tech-news-assistant`,
 `salon-hub`).
 
 For the full semantic pipeline (docs + screenshots + INFERRED edges) the user

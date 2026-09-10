@@ -19,11 +19,11 @@ $EVIDENCE = "$env:SystemDrive/temp/atn-verify/$RUN_ID"
 New-Item -ItemType Directory -Force -Path $EVIDENCE | Out-Null
 ```
 
-**Python environment.** The committed `backend/venv` in the main checkout is dead. Its `pyvenv.cfg` points at `C:\Users\Tri\...`, a profile that no longer exists, so every command through it fails with "did not find executable". Build a throwaway one at a short path instead. Long paths under the agent scratchpad break the numpy install.
+**Python environment.** The committed `backend/venv` in the main checkout is dead. Its `pyvenv.cfg` points at a home directory that no longer exists, so every command through it fails with "did not find executable". Build a throwaway one at a short path instead. Long paths under the agent scratchpad break the numpy install.
 
 ```powershell
-python -m venv C:\temp\atn-verify-venv
-C:\temp\atn-verify-venv\Scripts\python.exe -m pip install --quiet `
+python -m venv $env:SystemDrive\temp\atn-verify-venv
+& $env:SystemDrive\temp\atn-verify-venv\Scripts\python.exe -m pip install --quiet `
   "fastapi==0.104.1" "uvicorn[standard]==0.24.0" "pydantic-settings==2.5.2" `
   python-dotenv python-multipart "httpx==0.27.2" requests numpy feedparser `
   beautifulsoup4 "sqlalchemy==2.0.36" APScheduler structlog
@@ -38,7 +38,7 @@ Push-Location backend
 $env:ENVIRONMENT = "testing"
 $env:SQLITE_DATABASE_PATH = "./data/verify.db"
 $env:DATABASE_URL = "sqlite:///./data/verify.db"
-C:\temp\atn-verify-venv\Scripts\python.exe -m uvicorn src.main:app --host 127.0.0.1 --port 8000
+& $env:SystemDrive\temp\atn-verify-venv\Scripts\python.exe -m uvicorn src.main:app --host 127.0.0.1 --port 8000
 ```
 
 All three variables are load-bearing.

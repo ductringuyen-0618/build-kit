@@ -80,8 +80,11 @@ backed here is marked as a judgment call in the skill text.
 
 ## Other
 
-- DigitalOcean's own App Platform skills for coding agents,
-  `npx skills add digitalocean-labs/do-app-platform-skills`:
+- DigitalOcean's own App Platform skills for coding agents. The repo
+  README installs by `git clone` plus a symlink into `~/.claude/skills`,
+  `~/.codex/skills` or `~/.cursor/skills` (the launch blog post mentions
+  an `npx skills add` form; the README is authoritative):
+  https://github.com/digitalocean-labs/do-app-platform-skills and
   https://www.digitalocean.com/blog/deploy-smarter-with-ai-app-platform-skills-on-digitalocean
 - GitHub Action `digitalocean/app_action/deploy@v2` (used by the CI/CD
   skill): https://github.com/digitalocean/app_action
