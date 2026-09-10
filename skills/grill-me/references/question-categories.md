@@ -1,91 +1,88 @@
-# Question Categories for grill-me
+# Question categories for grill-me
 
-A taxonomy of questions to draw from while interrogating. Don't ask all of
-them — ask the ones with the highest leverage on downstream decisions.
+A taxonomy to draw from while interviewing. Do not ask all of them. Pick
+the ones with the highest leverage on what gets built, and skip anything
+the codebase or the brief already answers.
 
-## Goal & motivation
+## The five to ask when time is short
+
+1. What is the smallest version that would still be valuable?
+2. Who uses it, and what do they do today instead?
+3. What is explicitly out of scope?
+4. How will we know it worked?
+5. What is the worst thing that happens when it breaks?
+
+## Goal and motivation
 - What does success look like a month after this ships?
-- Who feels the pain that this fixes? Show me an example moment.
-- If we did nothing, what's the worst-case six months from now?
-- What's the goal *behind* the goal — what does this enable?
+- Who feels the pain this fixes? Describe one concrete moment.
+- If we did nothing, what is the worst case in six months?
+- What is the goal behind the goal?
 
-## Users / audience
-- Who triggers this — a person, an automated system, both?
-- How often does this happen per user / per day?
-- What do they do today instead of this?
-- Are they the same person every time, or a rotating pool?
+## Users and audience
+- Who triggers this: a person, an automated system, both?
+- How often per user, per day?
+- What do they do today instead?
 
-## Scope (in / out)
-- What's the smallest version that would still be valuable?
-- What are we explicitly *not* doing here?
-- Is this v1, or are we building toward something bigger?
-- Does this replace something existing, or live alongside it?
+## Scope
+- What is the smallest version that is still valuable?
+- What are we explicitly not doing?
+- Is this v1 of something bigger, or complete on its own?
+- Does this replace something, or live alongside it?
 
 ## Constraints
-- What can't change? (existing API, schema, deployment, auth model)
-- What's the deadline, if any?
-- What budget constraints (cost, infra, headcount)?
-- Compliance / regulatory / security constraints?
-- What's the team's current familiarity with the tech needed?
+- What cannot change (API, schema, deployment, auth model)?
+- What is the deadline?
+- Cost, infrastructure, or headcount limits?
+- Compliance, regulatory, or security requirements?
 
 ## Data
-- Where does the input data come from? Format, freshness, volume?
-- Where does the output go? Persisted, ephemeral, both?
-- What's the source of truth? Can it disagree with itself?
-- What about deletes / GDPR / right-to-erasure?
+- Where does input come from? Format, freshness, volume?
+- Where does output go? Persisted or ephemeral?
+- What is the source of truth?
+- What about deletion or right-to-erasure?
 
 ## Existing system
-- What parts of the codebase does this touch?
-- Are we extending an existing service or creating a new one?
-- What contracts (API, schema, event) must we keep stable?
-- What does the deploy story look like — same pipeline or new?
+- Which parts of the codebase does this touch?
+- Extend an existing service or create a new one?
+- Which contracts (API, schema, events) must stay stable?
+- Same deploy pipeline or a new one?
 
 ## Success criteria
-- How will you know this worked, three months out?
-- What's the leading indicator? The lagging one?
-- Is there a metric we'll watch in production?
-- What would cause us to *roll this back*?
+- How will you know it worked?
+- Leading indicator? Lagging indicator?
+- What would make us roll it back?
 
-## Failure modes & risk
-- What's the worst thing that happens if this breaks?
+## Failure modes and risk
+- What is the worst thing that happens if this breaks?
 - What user data is at risk?
-- Can we put this behind a flag and disable it instantly?
-- What's the blast radius of a bug?
+- Can it sit behind a flag and be switched off instantly?
+- What is the blast radius of a bug?
 
-## Alternatives & path-not-taken
-- What did you consider before this?
-- Why did you rule those out?
-- Has the team tried something like this before?
-- Is there an off-the-shelf option we'd be reinventing?
+## Alternatives
+- What did you consider before this, and why did you rule it out?
+- Is there an off-the-shelf option we would be reinventing?
 
 ## Dependencies
-- Does this need work from other teams to land?
-- Is there an external service / vendor / library involved?
-- What gets blocked if this slips?
-- What blocks this if dependencies slip?
+- Does this need work from other people or teams?
+- Is an external service, vendor, or library involved?
+- What is blocked if this slips?
 
 ## Edge cases
-- What happens when there's zero data? Massive data?
-- What about concurrency / two users doing this at once?
-- What about retries / duplicates / partial failure?
-- What localisation / accessibility / device-class issues?
+- Zero data? Huge data?
+- Two users doing this at once?
+- Retries, duplicates, partial failure?
+- Localisation, accessibility, device class?
 
 ## Operations
 - Who owns this once it ships?
-- What's the on-call story?
-- What logging / metrics / traces do we want from day one?
-- Who will be the escalation point in week 2?
-
----
+- What logging or metrics do we want from day one?
 
 ## How to use this list
 
-1. Skim it during step 1 of the workflow.
-2. Pick the **3–4 categories least obvious from the user's prompt**.
-3. Within each category, pick the question that's most likely to surface a
-   surprise. Boring questions get boring answers.
-4. Don't ask every question in a category — pick the highest-leverage one.
-
-You're not running through a checklist. You're hunting for the spots where
-the user's mental model and your mental model would diverge if you started
-building right now.
+1. Skim it before the first question.
+2. Pick the 3 or 4 categories least obvious from the user's prompt.
+3. In each, choose the question most likely to surface a surprise.
+   Boring questions get boring answers.
+4. You are not running a checklist. You are hunting for the places where
+   the user's mental model and yours would diverge if you started building
+   now.
