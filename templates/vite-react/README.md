@@ -1,72 +1,57 @@
-# Frontend skeleton: Vite + React + TypeScript
+# vite-react
 
-A description, not a generator. Use only if the prompt needs a UI. In a
-three-hour build the frontend is one page with the three flows the issue
-names; no router, tab or state switching inside `App.tsx`.
+Vite + React + TypeScript single-page frontend in `frontend/`. Dev server on
+port 5173; production is static files in `dist/` (no port, no health path).
+On App Platform it is a `static_sites` component, so the Dockerfile is only
+for Docker-based hosts.
 
-## Layout
+## Scaffold (from the repo root)
 
 ```
-frontend/
-  src/
-    main.tsx
-    App.tsx                 single page; tab state lives here if needed
-    config/api.ts           API_BASE_URL from VITE_API_BASE_URL, same-origin fallback
-    components/<Feature>.tsx
-    components/ui/          only what is used
-  e2e/                      Playwright specs (optional, see verify-feature)
-  index.html
-  vite.config.ts            server.port fixed, strictPort: true
-  tsconfig.json
-  .prettierrc               singleQuote, printWidth 80, tabWidth 2, arrowParens avoid, trailingComma es5, endOfLine lf
-  package.json
+npm create vite@latest frontend -- --template react-ts && cd frontend && npm i
+npm i -D prettier && cp <kit>/templates/vite-react/{Dockerfile,.env.example} .
 ```
 
-## `config/api.ts`
+Add these scripts to `package.json` (Vite's scaffold gives `dev`, `build`, `lint`, `preview`):
+
+```json
+"typecheck": "tsc --noEmit",
+"format:check": "prettier --check src",
+"verify": "npm run typecheck && npm run lint && npm run format:check && npm run build"
+```
+
+`src/config/api.ts` resolves the API base once:
 
 ```ts
 export const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? window.location.origin;
-
-// Trailing slashes are deliberate: FastAPI's redirect drops CORS headers.
-export const ENDPOINTS = {
-  health: `${API_BASE_URL}/health`,
-  items: `${API_BASE_URL}/api/items/`,
-};
 ```
 
-On App Platform the frontend is a `static_sites` component and the API
-is a `services` component behind an ingress rule on `/api`, so the
-same-origin fallback is what production uses. Locally set
-`VITE_API_BASE_URL=http://localhost:8000` in `frontend/.env.local`.
+First check: `npm run verify` passes and `dist/index.html` exists.
 
-## Scripts
+## Commands (run from `frontend/`)
 
-```json
-{
-  "dev": "vite",
-  "build": "tsc -b && vite build",
-  "typecheck": "tsc --noEmit",
-  "lint": "eslint .",
-  "format:check": "prettier --check src",
-  "verify": "npm run typecheck && npm run lint && npm run format:check && npm run build",
-  "test:e2e": "playwright test"
-}
-```
+| Task | Command |
+| --- | --- |
+| run | `npm run dev` (http://localhost:5173) |
+| test | `npm run verify` (typecheck + lint + format + build; add Playwright specs if time allows) |
+| lint | `npm run lint && npm run typecheck` |
+| build | `npm run build` (writes `dist/`) |
+| image | `docker build --build-arg VITE_API_BASE_URL=https://api.example.com -t web .` |
 
-`npm run verify` is the frontend gate the CI template runs.
+## Files in this folder
 
-## Testing
+- `Dockerfile`: Node build stage, unprivileged nginx serving `dist/` on 8080 with SPA fallback. Copy to `frontend/Dockerfile`.
+- `ci-job.yml`: GitHub Actions job running `npm run verify`. Paste under `jobs:` in `.github/workflows/ci.yml`.
+- `.env.example`: the one variable the browser bundle reads. Copy to `frontend/.env.example`; `.env.local` is git-ignored.
+- `app-component.yaml`: App Platform `static_sites:` entry. Paste into `.do/app.yaml` and route `/` to it.
 
-There is no unit-test runner in this skeleton on purpose. The check is
-`npm run verify` plus, if time allows, one Playwright spec per main flow
-and the exhaustive click sweep described in `skills/verify-feature`.
-Select elements by ARIA role and accessible name.
+## Conventions
 
-## Aesthetic
-
-Pick one direction and say it in the README. If the `designer-skills`
-pack is installed, `frontend-design` lists named philosophies with
-concrete type, colour, spacing and motion rules. Without it: one display
-font, one body font, one accent colour, CSS variables for both light and
-dark, 44px touch targets, 16px body on mobile.
+- Only `VITE_`-prefixed variables reach the browser, and they are baked in at build time.
+- Leave `VITE_API_BASE_URL` unset in production so calls go same-origin through the
+  ingress rule that sends `/api` to the backend; set it to the backend's local URL in dev.
+- Call the backend's exact path form (with or without trailing slash) to avoid redirects
+  that drop CORS headers.
+- One page, one `App.tsx`; add a router only when the brief names more than one screen.
+- Select elements in tests by ARIA role and accessible name.

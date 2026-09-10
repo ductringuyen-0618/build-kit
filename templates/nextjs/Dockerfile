@@ -1,12 +1,13 @@
 # syntax=docker/dockerfile:1.6
-# Next.js with output: 'standalone'. Copy to frontend/Dockerfile.
-# Requires `output: 'standalone'` in next.config.ts.
+# Next.js service using output: 'standalone' (set it in next.config.ts).
+# Copy to frontend/Dockerfile and build from that folder.
 
 FROM node:22-alpine AS builder
 WORKDIR /app
 ARG NEXT_PUBLIC_API_BASE_URL=
 ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL NEXT_TELEMETRY_DISABLED=1
 COPY package.json package-lock.json ./
+# CHANGE: pnpm-lock.yaml + `corepack enable && pnpm i --frozen-lockfile` for pnpm
 RUN npm ci
 COPY . .
 RUN npm run build

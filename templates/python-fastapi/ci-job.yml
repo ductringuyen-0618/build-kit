@@ -1,22 +1,23 @@
-# CI job snippet for a Python FastAPI service in backend/.
-# Paste under `jobs:` in .github/workflows/ci.yml.
+# GitHub Actions job for a FastAPI service. Paste under `jobs:` in
+# .github/workflows/ci.yml (keep the two-space indent). Lines marked
+# CHANGE are the ones a new repo must edit.
   backend:
     name: Backend
     runs-on: ubuntu-latest
     timeout-minutes: 15
     defaults:
       run:
-        working-directory: backend
+        working-directory: backend   # CHANGE: folder that holds requirements.txt
     env:
       ENVIRONMENT: testing
-      DATABASE_URL: sqlite:///./data/ci.db
+      DATABASE_URL: sqlite:///./data/ci.db   # CHANGE: if tests need Postgres, add a services: block
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
         with:
-          python-version: '3.12'
+          python-version: '3.12'   # CHANGE: match the Dockerfile base image
           cache: pip
-          cache-dependency-path: backend/requirements.txt
+          cache-dependency-path: backend/requirements.txt   # CHANGE: same folder as working-directory
       - run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
@@ -24,4 +25,4 @@
       - run: ruff check . && ruff format --check .
       - run: mypy . --ignore-missing-imports
       - run: mkdir -p data && pytest tests -q
-      - run: python -c "from src.main import app"
+      - run: python -c "from src.main import app"   # CHANGE: import path of the app object

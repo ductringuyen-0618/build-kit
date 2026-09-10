@@ -1,12 +1,14 @@
 # syntax=docker/dockerfile:1.6
-# Spring Boot image: JDK builder stage, JRE runtime stage, non-root user.
-# App Platform has no Java buildpack, so this file is required there.
-# Copy to backend/Dockerfile.
+# Spring Boot service. Copy to backend/Dockerfile and build from that folder.
+# Stage 1 builds the jar with the Gradle wrapper; stage 2 is a JRE-only
+# non-root runtime. Required on App Platform (no Java buildpack).
 
 FROM eclipse-temurin:17-jdk AS builder
+# CHANGE: 17 -> the javaVersion used when scaffolding (also in ci-job.yml)
 WORKDIR /app
 COPY gradle gradle
 COPY gradlew build.gradle settings.gradle ./
+# CHANGE: build.gradle.kts settings.gradle.kts if the project uses Kotlin DSL
 RUN chmod +x gradlew && ./gradlew dependencies --no-daemon > /dev/null
 COPY src src
 RUN ./gradlew bootJar --no-daemon

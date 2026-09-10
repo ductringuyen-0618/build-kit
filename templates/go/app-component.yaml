@@ -1,12 +1,14 @@
-# App Platform service component for a Go backend in backend/.
-# Paste under `services:` in .do/app.yaml. Dockerfile variant shown; the Go
-# buildpack detects go.mod but the run command must then be set explicitly.
+# DigitalOcean App Platform `services:` entry for a Go backend.
+# Paste under `services:` in .do/app.yaml (the kit's templates/do-app.yaml
+# shows the full spec). Dockerfile build shown. The Go buildpack also detects
+# go.mod: delete dockerfile_path and set `run_command: bin/server` (it builds
+# every package under cmd/ into bin/).
   - name: api
     github:
-      repo: OWNER/REPO
+      repo: OWNER/REPO            # CHANGE
       branch: main
       deploy_on_push: true
-    source_dir: backend
+    source_dir: backend           # CHANGE: folder that holds the Dockerfile
     dockerfile_path: backend/Dockerfile
     http_port: 8080
     instance_count: 1
@@ -20,10 +22,11 @@
         value: production
       - key: DATABASE_URL
         scope: RUN_TIME
-        value: ${db.DATABASE_URL}
+        value: ${db.DATABASE_URL}   # bindable: the managed database named `db`
       - key: ALLOWED_ORIGINS
         scope: RUN_TIME
         value: ${APP_URL}
+      # Secrets: declare the key with an empty value, set it in the control panel. CHANGE or delete.
       - key: ADMIN_TOKEN
         scope: RUN_TIME
         type: SECRET
