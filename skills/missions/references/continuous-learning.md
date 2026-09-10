@@ -29,8 +29,8 @@ Encode a learning when any of these happened:
 | a deploy failure pattern | `skills/deploy-digitalocean-app-platform` |
 | a decision and its alternatives | `docs/DECISIONS.md` (see `skills/walkthrough-prep`) |
 
-agent-os keeps a `learnings.md` beside each skill and appends to it
-after every run. Outside the daemon the equivalent is a dated line in
+The author's agent runtime keeps a `learnings.md` beside each skill and
+appends to it after every run. Outside such a runtime the equivalent is a dated line in
 the skill's own file under a `## Learnings` heading; keep it to one
 line per lesson with the date.
 

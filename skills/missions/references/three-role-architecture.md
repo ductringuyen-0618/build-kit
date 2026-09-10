@@ -1,6 +1,6 @@
 # Three roles: runner, worker, validators
 
-The pattern that agent-os's feature-request workflow and Tri's COO
+The pattern the author's automated feature workflow and its scheduled
 routine both implement. The point is not the number of agents; it is
 that the person or process checking the work did not do the work and did
 not watch it being done.
@@ -12,9 +12,9 @@ not watch it being done.
 | Scrutiny validator | the goal, the contract, the diff, the CI workflow files | run the exact check commands, read code, make small `style:`/`fix:` commits | `PASS`/`FAIL` first line, exit codes and tails, contract proof table |
 | User-testing validator | the goal, the behavioural assertions, the running app's URL | drive the app from outside (browser, curl, smoke script) | `PASS`/`FAIL`/`BLOCKED`, observed versus expected per assertion, reproductions |
 
-Product review, the third role in the COO prompt, is the user-testing
+Product review, the third role in the scheduled routine, is the user-testing
 validator plus a taste judgement: would a user find this finished. In
-agent-os it is `feature-review`, a read-only diff review against the
+the automated workflow it is `feature-review`, a read-only diff review against the
 proposal. In a timed build fold it into the user-testing pass: the
 person who opens the URL also asks "would I ship this".
 
@@ -48,6 +48,6 @@ protecting.
 | Runner | `briefings/runner.md`, `skills/timebox` in a timed build |
 | Worker | `briefings/worker.md`, `skills/feature-build` |
 | Scrutiny validator | `briefings/validator-scrutiny.md`, `skills/feature-validate` |
-| User-testing validator | `briefings/validator-user-testing.md`, `skills/smoke-verify`, `agents/blackbox-qa-validator` |
+| User-testing validator | `briefings/validator-user-testing.md`, `skills/smoke-verify`, `agents/user-tester.md` |
 | Product review | `skills/feature-review` |
 | Ship | `skills/ship-gate` |

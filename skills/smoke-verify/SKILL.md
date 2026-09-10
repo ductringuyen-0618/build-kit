@@ -13,12 +13,10 @@ and a summary. Exit 0 when everything passed, 1 when something failed,
 knowledge, works against FastAPI, Spring Boot, Fastify, Go, Next.js or
 anything else that speaks HTTP.
 
-This replaces `test-app-e2e` and `verify-feature` in a timed build.
-Those two are tied to one project's routes, scripts and ports; adapting
-their 900-line runner or their Playwright sweep under a clock costs more
-than it returns. Their ideas survive here: black-box, over HTTP, one
-result per check with enough detail to act on. Their project-specific
-parts do not.
+It is the HTTP half of verification; `e2e-verify` is the browser half
+for a UI. Both are black-box, over the wire, one result per check with
+enough detail to act on, and neither assumes a project's routes, scripts
+or ports.
 
 ## When to run it
 
@@ -38,12 +36,12 @@ against the public URL and keep that output.
 ```
 python skills/smoke-verify/scripts/smoke.py --base-url http://127.0.0.1:8000
 python skills/smoke-verify/scripts/smoke.py --base-url http://127.0.0.1:8000 "GET /health 200 healthy"
-python skills/smoke-verify/scripts/smoke.py --base-url https://interview-app-xxxxx.ondigitalocean.app --checks smoke.json
+python skills/smoke-verify/scripts/smoke.py --base-url https://my-app-xxxxx.ondigitalocean.app --checks smoke.json
 python skills/smoke-verify/scripts/smoke.py --base-url URL --checks smoke.json --json > docs/smoke-report.json
 ```
 
-Copy the script into the session repo as `scripts/smoke.py` (the kit's
-port scripts copy it with the skill) so the README can say `python
+Copy the script into the session repo as `scripts/smoke.py` (the skill
+installer carries `scripts/` with the skill) so the README can say `python
 scripts/smoke.py --base-url ... --checks smoke.json` and CI can run it
 against a server started in the job.
 
@@ -96,6 +94,25 @@ appears, a scheduler runs) belong to the user-testing briefing in
 Use a unique value per run for the create-then-read pair (a timestamp
 in the name) so a stale row from a previous run cannot make the
 read-back pass.
+
+## Without Python: the curl equivalent
+
+The script is a convenience, not a dependency. Each check is one `curl`
+call; the status code and a substring are what you compare.
+
+```
+BASE=http://127.0.0.1:8000
+curl -s -o body.txt -w '%{http_code}\n' "$BASE/health" ; grep -c healthy body.txt
+curl -s -o body.txt -w '%{http_code}\n' -X POST -H 'Content-Type: application/json' -d '{"name":"widget"}' "$BASE/api/items/" ; grep -c '"id"' body.txt
+curl -s -o body.txt -w '%{http_code}\n' "$BASE/api/items/" ; grep -c widget body.txt
+curl -s -o /dev/null -w '%{http_code}\n' -X POST -H 'Content-Type: application/json' -d '{}' "$BASE/api/items/"   # expect 422
+curl -s -o /dev/null -w '%{http_code}\n' "$BASE/api/items/does-not-exist"                                        # expect 404
+```
+
+PowerShell: `(Invoke-WebRequest -Uri "$BASE/health" -SkipHttpErrorCheck).StatusCode`
+and `.Content -match 'healthy'`. Report the result the same way the
+script prints it: one line per check, `PASS` or `FAIL`, expected versus
+observed.
 
 ## Reading the output
 
@@ -153,8 +170,7 @@ timestamp.
 
 ## Tool notes
 
-Any assistant can run the script through its shell tool. In Claude Code
-the `verify-feature` and `test-app-e2e` skills may also be installed;
-ignore them for a new project and use this one. A subagent briefed with
+Any assistant can run the script through its shell tool, or the curl
+equivalent above when Python is not on the machine. A subagent briefed with
 `skills/missions/briefings/validator-user-testing.md` should paste the
 script's output into its report rather than describe it.

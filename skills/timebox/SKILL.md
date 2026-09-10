@@ -1,6 +1,6 @@
 ---
 name: timebox
-description: Operator discipline for a three-hour build session. Keeps a running clock file at docs/TIMELOG.md, enforces the playbook's cut rules at minutes 45, 85, 90, 120, 140, 150, 160 and 170, commits every fifteen minutes, and carries the verify-before-trust habit list that DigitalOcean's interview write-up says candidates are judged on. Use at the start of any timed session, whenever someone asks "how much time is left", "should I cut this", or before accepting a green claim from an assistant.
+description: Operator discipline for a three-hour build session. Keeps a running clock file at docs/TIMELOG.md, enforces the playbook's cut rules at minutes 45, 85, 90, 120, 140, 150, 160 and 170, commits every fifteen minutes, and carries the verify-before-trust habit list a reviewer of a timed build judges by. Use at the start of any timed session, whenever someone asks "how much time is left", "should I cut this", or before accepting a green claim from an assistant.
 ---
 
 # Timebox: the clock is the runner
@@ -20,7 +20,7 @@ correction is a new line.
 # Timelog
 start: 2026-09-09T14:00 local
 0   stack: python-fastapi (prompt is AI-flavoured; provider fake carries over)
-4   grill-me done, docs/designs/booking-rules.md
+4   grill-me done, docs/design.md
 9   issue written, 4 acceptance criteria
 14  scaffold green  https://github.com/<owner>/app/actions/runs/1
 15  COMMIT chore: scaffold service with health check, tests and ci
@@ -51,7 +51,7 @@ minutes of uncommitted work when the machine, the network or the
 assistant misbehaves. Squash later if the history needs to be tidy;
 never rewrite what is already pushed.
 
-The history is also the walkthrough. Interviewers read `git log` before
+The history is also the walkthrough. Reviewers read `git log` before
 they read code. Small, ordered, criterion-named commits tell the story
 without narration.
 
@@ -106,7 +106,7 @@ line below is a `VERIFIED` line in the timelog when done.
 - **Say the miss out loud.** When the assistant produces something
   confident and wrong, name it, fix it, and write one line in
   `docs/DECISIONS.md` under "what the AI got wrong". That line is the
-  one the interviewer wants to hear in the walkthrough.
+  one a reviewer wants to hear in the walkthrough.
 
 ## Working with an assistant under the clock
 

@@ -14,7 +14,7 @@ anyone else reading. It holds, in this order:
 ```
 # Mission: <goal in one sentence>
 Started: <ISO time>   Budget: <wall-clock or minute limit>   Stop rule: <see below>
-Design: docs/designs/<slug>.md   PRD: <path or none>
+Design: docs/design.md   PRD: <path or none>
 
 ## Milestones
 | # | slug | contract | status | attempts | branch | head |

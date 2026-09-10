@@ -7,7 +7,7 @@ evening. Stack and paths are the kit's `python-fastapi` template layout.
 ```markdown
 # Mission: articles refresh themselves every hour without an operator calling the ingest endpoint
 Started: 2026-09-09T20:00   Budget: stop at 23:00 or after 6 worker runs   Stop rule: time
-Design: docs/designs/scheduled-ingestion.md   PRD: none
+Design: docs/design.md   PRD: none
 
 ## Milestones
 | # | slug | contract | status | attempts | branch | head |

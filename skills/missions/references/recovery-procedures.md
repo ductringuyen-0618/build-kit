@@ -19,7 +19,7 @@ Signal: the attempts column reads 3 and the last validator still says
    with what the validators saw. That paragraph is more useful than a
    fourth attempt.
 
-The COO routine uses the same rule: at three attempts the proposal is
+The author's scheduled routine uses the same rule: at three attempts the proposal is
 marked `blocked` and never touched again without a human editing it
 back.
 
@@ -56,7 +56,7 @@ mismatch, an environment variable present locally and absent in CI.
 Signal: a new runner starts and finds "Current" in the mission file
 pointing at a milestone with status `building`.
 
-1. `git log --oneline -20 req/<slug>` shows what the worker committed
+1. `git log --oneline -20 feature/<slug>` shows what the worker committed
    before dying. That is the truth; the hand-off may not exist.
 2. Re-brief the worker with "the branch exists; resume from its log, do
    not restart from scratch". This is `feature-build` step 1.

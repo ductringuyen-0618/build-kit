@@ -7,8 +7,7 @@ description: Multi-agent execution framework for long-running software goals (ho
 > with only the briefing as input. In Claude Code that is the `Agent`
 > tool; in Cursor, Codex or a plain chat it is a new conversation with
 > the briefing pasted in. The briefings are in `briefings/` next to this
-> file; the role pattern they follow is described in the kit's
-> `agents/README.md`.
+> file; `README.md` in this folder says how to use them together.
 
 # missions: long-running multi-agent execution
 
@@ -194,14 +193,34 @@ own reasoning into a briefing; that contaminates the independent check.
 
 ## Bundled files
 
+`README.md` in this folder says how to use them together.
+
 ### briefings/
 
 Templates the orchestrator pastes into subagent prompts. Do not
 summarise them in chat; paste them whole:
 
+- `runner.md`: the orchestrator's own checklist: mission file shape,
+  attempts counter, stop rule.
 - `worker.md`: for the implementer subagent.
 - `validator-scrutiny.md`: for the code-review and tests validator.
 - `validator-user-testing.md`: for the app-driving validator.
 
-The role pattern behind them, and how to hand a brief to an agent in
-each tool, is in the kit's `agents/README.md`.
+### references/
+
+Open these when you need depth on one concept:
+
+- `three-role-architecture.md`: orchestrator, worker and validator roles.
+- `validation-contract-template.md`: how to write a milestone contract.
+- `handoff-format.md`: the structured worker report shape.
+- `serial-vs-parallel.md`: when each pattern beats the other.
+- `recovery-procedures.md`: what to do when a milestone fails three times.
+- `continuous-learning.md`: how to encode learnings back into skills.
+
+### examples/
+
+- `example-mission.md`: a worked mission file for a two-milestone
+  feature, including one failed validation and the fix cycle.
+
+The role pattern behind the briefings, and how to hand a brief to an
+agent in each tool, is in the kit's `agents/README.md`.

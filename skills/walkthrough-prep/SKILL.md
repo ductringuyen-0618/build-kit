@@ -1,6 +1,6 @@
 ---
 name: walkthrough-prep
-description: Prepare the interview's second half while building the first. Keeps docs/DECISIONS.md as you go (decision, alternatives, why, what was verified versus trusted from the AI), then in the last ten minutes turns it into a walkthrough script: architecture in two minutes, three trade-offs, what changes at 10x traffic or a spike, what was not verified and how it would be. Scaling answers are grounded in DigitalOcean primitives (App Platform instances and autoscaling, Managed Postgres read-only nodes and connection pools, Managed Valkey, Spaces, Load Balancers) with doc URLs in references/. Use when asked to "prep the walkthrough", "write up the decisions", "what would you change at scale", or at minute 170 of a timed build.
+description: Prepare the walkthrough that follows a timed build while building. Keeps docs/DECISIONS.md as you go (decision, alternatives, why, what was verified versus trusted from the AI), then in the last ten minutes turns it into a walkthrough script covering architecture in two minutes, three trade-offs, what changes at 10x traffic or a spike, and what was not verified and how it would be. Scaling answers are grounded in DigitalOcean primitives (App Platform instances and autoscaling, Managed Postgres read-only nodes and connection pools, Managed Valkey, Spaces, Load Balancers) with doc URLs in references/. Use when asked to "prep the walkthrough", "write up the decisions", "what would you change at scale", or at minute 170 of a timed build.
 ---
 
 # Walkthrough prep: the decisions file and the script
@@ -9,7 +9,7 @@ DigitalOcean's write-up of the build session says candidates "walked
 interviewers through what they'd built: design choices, trade-offs, and
 what they'd do differently with more time", then took "hypotheticals
 about scaling, business constraints, what it would look like if traffic
-spiked". The walkthrough is half the interview. It cannot be written at
+spiked". The walkthrough is half of what a build session is judged on. It cannot be written at
 minute 170 from memory; it is written at minute 4, 14, 29 and 106 as the
 decisions happen, then read aloud.
 

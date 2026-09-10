@@ -3,9 +3,9 @@
 `SKILL.md` is the pattern: a runner plans, workers build one milestone at
 a time, validators who never saw the worker's reasoning verify, and one
 mission file is the memory. The folders beside it are the working parts,
-written from the version of this loop that shipped real features through
-agent-os's feature-request workflow and Tri's COO routine (see
-`docs/how-tri-builds.md` at the kit root).
+written from the version of this loop that shipped real features in the
+author's automated feature workflow (see `docs/the-loop.md` at the kit
+root).
 
 ## briefings/
 
@@ -16,7 +16,7 @@ is a new conversation. Never paste the runner's own reasoning into them.
 | File | Role | First line of its report |
 | --- | --- | --- |
 | `runner.md` | the orchestrator's own checklist: mission file, attempts counter, stop rule | n/a (writes the mission file) |
-| `worker.md` | builds exactly the validation contract on `req/<slug>`, commits, never pushes | `## Worker hand-off` with head sha |
+| `worker.md` | builds exactly the validation contract on `feature/<slug>`, commits, never pushes | `## Worker hand-off` with head sha |
 | `validator-scrutiny.md` | runs the exact CI commands, proves each assertion, reports tails | `PASS` or `FAIL` |
 | `validator-user-testing.md` | drives the running app from outside, scores each behavioural assertion | `PASS`, `FAIL` or `BLOCKED` |
 

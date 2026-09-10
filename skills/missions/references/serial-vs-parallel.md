@@ -14,9 +14,9 @@ cost real time:
 3. Correctness compounds. A validated milestone 1 is a stable base; an
    unvalidated one is a moving target for everyone downstream.
 
-agent-os runs one build step per workflow instance and flips the
-proposal to `building` so a second builder (the daily COO routine)
-cannot pick the same feature. That flag is the serial rule in file
+The author's automated workflow runs one build step per instance and
+flips the proposal to `building` so a second builder (a daily scheduled
+routine) cannot pick the same feature. That flag is the serial rule in file
 form.
 
 The exception: two milestones that touch disjoint directories and share

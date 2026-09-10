@@ -67,7 +67,7 @@ starting the feature. Red CI at the start becomes red CI at the end.
    what it is (one sentence, placeholder allowed), run locally, run
    tests, deploy. Add sections later; do not leave these empty.
 9. **Commit and push.** `gh repo create <name> --private --source . --push`
-   (or `--public` if the interviewer will read it), first commit message
+   (or `--public` if a reviewer will read it), first commit message
    `chore: scaffold service with health check, tests and ci`. Then
    `gh run watch` or `gh run list --limit 1` until the check is green.
    Branch protection per `skills/ci-cd-github-actions` section 3 once it
@@ -124,7 +124,7 @@ cp ../templates/python-fastapi/Dockerfile Dockerfile && cd ..
 mkdir -p .github/workflows .do && cp templates/ci.yml .github/workflows/ci.yml && cp templates/do-app.yaml .do/app.yaml
 # edit .do/app.yaml: OWNER/REPO, drop static_sites and its ingress rule
 # README.md: what, run locally, run tests, deploy
-gh repo create interview-app --private --source . --push
+gh repo create my-app --private --source . --push
 git add -A && git commit -m "chore: scaffold service with health check, tests and ci" && git push
 gh run list --limit 1     # completed  success  CI
 ```

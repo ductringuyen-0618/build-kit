@@ -16,7 +16,7 @@ after you finish; they will not read your explanation, only your commits.
 
 - Repository: `<absolute path or clone URL>`
 - Base branch: `<main>`
-- Work branch: `req/<slug>` (create it from the base branch if it does not
+- Work branch: `feature/<slug>` (create it from the base branch if it does not
   exist; if it exists, `git log --oneline -20` on it first and resume
   from what a previous attempt already committed)
 - Milestone goal: `<one sentence>`
@@ -63,7 +63,7 @@ after you finish; they will not read your explanation, only your commits.
 
 ```
 ## Worker hand-off: <slug>, attempt <n>
-- branch: req/<slug>
+- branch: feature/<slug>
 - head: <sha>
 - commits:
   - <sha> <message>

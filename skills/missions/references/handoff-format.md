@@ -8,7 +8,7 @@ everything after it is evidence.
 
 ```
 ## Worker hand-off: <slug>, attempt <n>
-- branch: req/<slug>
+- branch: feature/<slug>
 - head: <sha>
 - commits:
   - <sha> <message>
@@ -19,7 +19,7 @@ everything after it is evidence.
 ```
 
 Required: every line. The runner verifies `head` with `git rev-parse
-req/<slug>`; a mismatch is a failed hand-off.
+feature/<slug>`; a mismatch is a failed hand-off.
 
 ## Scrutiny validator
 
@@ -36,7 +36,7 @@ exit code: <n>
 - <sha> <what>
 ```
 
-The first line must be exactly `PASS` or `FAIL`. agent-os reads the
+The first line must be exactly `PASS` or `FAIL`. The automated workflow reads the
 first line that is exactly one of those two words, so a validator that
 narrates before the verdict is still parsed, but do not rely on it.
 
@@ -60,7 +60,7 @@ url: <url>   started by me: yes/no   vehicle: <browser|curl|smoke.py|playwright>
 
 ```
 ## Shipped: <slug>
-- branch: req/<slug>   pr: <url>   merged: yes/no
+- branch: feature/<slug>   pr: <url>   merged: yes/no
 - ci: <check name>: pass | fail | skipped   run: <url>
 - commits: <sha> <message> ...
 - validator findings: <verbatim first lines plus fixes applied>

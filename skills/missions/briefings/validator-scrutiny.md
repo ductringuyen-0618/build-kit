@@ -15,7 +15,7 @@ first line is machine-parsed.
 ## Inputs
 
 - Repository: `<absolute path>`
-- Base branch: `<main>`; work branch: `req/<slug>`
+- Base branch: `<main>`; work branch: `feature/<slug>`
 - Milestone goal: `<one sentence>`
 - Validation contract (verbatim, including the exact check commands)
 - CI workflow files: `.github/workflows/*.yml` (read them; if their
@@ -24,7 +24,7 @@ first line is machine-parsed.
 
 ## Steps
 
-1. `git checkout req/<slug>` and `git diff <base>...HEAD --stat`, then
+1. `git checkout feature/<slug>` and `git diff <base>...HEAD --stat`, then
    read the full diff. Note anything the contract asked for that is not
    in the diff, and anything in the diff the contract did not ask for.
 2. Run every check command, in order, in the directory CI runs it in.
